@@ -33,7 +33,7 @@ class Title(models.Model):
         - Поле category (необязательное) связано с моделью Category,
         - Поле genre (необязательное) связано с моделью Genre,
         у одного произведения допускается несколько жанров,
-        переданных списком
+        переданных списком.
     """
     name = models.CharField(max_length=256)
     year = models.PositiveSmallIntegerField()
