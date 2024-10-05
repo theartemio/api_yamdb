@@ -1,5 +1,6 @@
 import random
 import re
+from http import HTTPStatus
 from rest_framework import status, viewsets, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -47,12 +48,17 @@ class LoginAPIView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
+        """ if request.data['username'] != User.objects.get(username=request.data['username']):
+            return Response(status=status.HTTP_404_NOT_FOUND) """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UsersAPIView(APIView):
+
+    def get(self, request):
+        pass
 
     def post(self, request):
         serializer = UsersSerializer(data=request.data)
