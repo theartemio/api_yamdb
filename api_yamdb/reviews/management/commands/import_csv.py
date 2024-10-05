@@ -1,20 +1,22 @@
-from django.core.management.base import BaseCommand, CommandError
-from reviews.models import Category, Genre, Title
 import os
-from django.apps import apps
-from django.conf import settings
-from .utils import get_file_names, get_data_directory, upload_csv_data
 
+from django.core.management.base import BaseCommand
+
+from .constants import MODELS_TO_LOAD
+from .utils import get_data_directory, get_file_names, upload_csv_data
 
 
 class Command(BaseCommand):
-    help = """
+    help = f"""
     Импорт данных из CSV файла в базу данных проекта.
-    По умолчанию загружает все файлы из директории static/data
+    По умолчанию загружает файлы из директории static/data
     в соответствующие (указанные в названии файла) таблицы.
 
     Например:
     Файл category.csv будет загружен в таблицу Category.
+
+    Импорт происходит в соответствии с указанным порядком:
+    {MODELS_TO_LOAD}
     """
 
     def add_arguments(self, parser):
@@ -22,52 +24,68 @@ class Command(BaseCommand):
         parser.add_argument(
             '--app_name',
             type=str,
-            help="""Приложение, в котором работает модель.
+            help="""Позволяет указать приложение, в котором
+            находятся модели.
             По умолчанию reviews.""",
         )
         parser.add_argument(
             '--dirpath',
             type=str,
-            help="""Директория, в которой расположены файлы.
+            help="""Позволяет указать приложение директорию,
+            в которой расположены файлы.
             Указывается относительно корневой папки проекта.
-            Пример: static/data""",
+            По умолчанию: static/data""",
         )
         parser.add_argument(
             '--filenames',
             nargs='+',
             type=str,
-            help="""Список файлов, которые необходимо импортировать.
-            Позволяет: 1) избирательно импортировать несколько файлов или
-            2) импортировать один файл в конкретную модель с использованием
-            аргумента --modelname, даже если их имена не совпадают.""",
+            help="""Позволяет перечислить файлы, которые нужно
+            импортировать.
+            По умолчанию доступны все файлы из директории.
+            """,
         )
         parser.add_argument(
-            '--model',
+            '--models',
+            nargs='+',
             type=str,
-            help="""Имя модели, в которую необходимо импортировать.
-            Позволяет импортировать данные в модель в случае, если
-            у файла и модели не совпадают имена.
-            Работает только в случае импорта одного файла.""",
+            help=f"""Позволяет изменить список моделей, в которые нужно
+            импортировать
+            данные, или поменять порядок импорта.
+            По умолчанию список и порядок: {MODELS_TO_LOAD}""",
         )
 
     def handle(self, *args, **options):
-        model_app = options['app_name'] or 'reviews'
+        app_name = options['app_name'] or 'reviews'
         dir_relative_path = options['dirpath'] or 'static/data'
         dir_abs_path = get_data_directory(dir_relative_path)
-        file_names = options['filenames'] or get_file_names(dir_abs_path)
+        files_in_dir = options['filenames'] or get_file_names(dir_abs_path)
+        models = options['models'] or MODELS_TO_LOAD
         successfull_imports = []
-        for file_name in file_names:
-            if len(file_names) == 1 and options['model']:
-                model_name = options['model']
-            else:
-                model_name = os.path.splitext(file_name)[0]
-            path_to_file = os.path.join(dir_abs_path, file_name)
+        for model_name in models:
+            related_file_name = model_name + '.csv'
+            if related_file_name not in files_in_dir:
+                self.stderr.write(self.style.ERROR(f"""Не найден файл
+                '{related_file_name}' для модели {model_name}."""))
+                answer = input("""Вы хотите ввести название файла вручную?
+                При ответе 'n' импорт продолжится
+                со следующей модели (y/n): """).strip().lower()
+                if answer == 'y':
+                    new_file_name = input(f"""Введите имя файла,
+                    соответствующее модели {model_name}: """).strip()
+                    related_file_name = new_file_name
+                else:
+                    self.stdout.write("""Импорт будет продолжен
+                    со следующей модели.""")
+                    continue
+            path_to_file = os.path.join(dir_abs_path, related_file_name)
             try:
-                current_model = apps.get_model(model_app, model_name)
-                upload_csv_data(path_to_file, current_model, model_name)
+                upload_csv_data(path_to_file, app_name, model_name)
                 successfull_imports.append(model_name)
             except Exception as error:
                 self.stderr.write(self.style.ERROR(f'Ошибка! {error}'))
-        stdout_message = f"""Импорт завершен!
-        Данные успешно импортированы в модели: {successfull_imports}."""
-        self.stdout.write(self.style.SUCCESS(stdout_message))
+        self.stdout.write(self.style.SUCCESS('Импорт завершен!'))
+        if successfull_imports:
+            self.stdout.write(self.style.SUCCESS(f"""Данные успешно
+                                                 импортированы в модели:
+                                                 {successfull_imports}."""))
