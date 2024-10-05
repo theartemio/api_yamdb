@@ -35,30 +35,33 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class UsersSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150, )
+    email = serializers.EmailField(max_length=255, )
+    first_name = serializers.CharField(max_length=150, )
+    last_name = serializers.CharField(max_length=150, )
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
-    class Meta:
+    """ class Meta:
         model = User
         fields = '__all__'
-        # fields = ['email', 'username']
-
-    
+        # fields = ['email', 'username'] """
 
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
-    username = serializers.CharField(max_length=255, read_only=True)
-    confirmate_code = serializers.CharField(max_length=128, write_only=True)
-    token = serializers.CharField(max_length=255, read_only=True)
+    username = serializers.CharField(max_length=255,)
+    confirmate_code = serializers.CharField(max_length=128,)
+    token = serializers.CharField(max_length=255,)
 
-    def validate(self, data):
+    """ def validate(self, data):
         # В методе validate мы убеждаемся, что текущий экземпляр
         # LoginSerializer значение valid. В случае входа пользователя в систему
         # это означает подтверждение того, что присутствуют адрес электронной
         # почты и то, что эта комбинация соответствует одному из пользователей.
         email = data.get('email', None)
+        username = data.get('username', None)
 
         # Вызвать исключение, если не предоставлена почта.
         if email is None:
@@ -70,7 +73,7 @@ class LoginSerializer(serializers.Serializer):
         # предоставленные почта и пароль соответствуют какому-то пользователю в
         # нашей базе данных. Мы передаем email как username, так как в модели
         # пользователя USERNAME_FIELD = email.
-        user = authenticate(username=email,)
+        user = authenticate(username=username,)
 
         # Если пользователь с данными почтой/паролем не найден, то authenticate
         # вернет None. Возбудить исключение в таком случае.
@@ -91,4 +94,4 @@ class LoginSerializer(serializers.Serializer):
         # данные, которые передются в т.ч. в методы create и update.
         return {
             'token': user.token
-        }
+        } """

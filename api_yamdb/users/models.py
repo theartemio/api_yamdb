@@ -10,9 +10,6 @@ CHOICES = (
     ("admin", "admin"),
 )
 
-""" class User(AbstractUser):
-    bio = models.TextField(blank=True)
-    role = models.CharField(max_length=16, choices=CHOICES, default='user') """
 
 class UserManager(BaseUserManager):
 
@@ -38,7 +35,20 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractUser):
+    password = None
+    email = models.EmailField(max_length=254, unique=True)
+    first_name = models.CharField(max_length=150,)
+    last_name = models.CharField(max_length=150,)
+    bio = models.TextField(blank=True)
+    role = models.CharField(max_length=16, choices=CHOICES, default='user')
+    objects = UserManager()
+
+    def __str__(self):
+        return self.email
+
+
+""" class User(AbstractBaseUser, PermissionsMixin):
 
     # username = models.CharField(db_index=True, max_length=255)
     username = models.CharField(max_length=150, unique=True)
@@ -75,3 +85,4 @@ class User(AbstractBaseUser, PermissionsMixin):
         }, settings.SECRET_KEY, algorithm='HS256')
 
         return token.decode('utf-8')
+ """
