@@ -1,7 +1,8 @@
 import datetime as dt
 
 from rest_framework import serializers
-from reviews.models import Category, Genre, Title, Review, Comment, Title
+
+from reviews.models import Category, Comment, Genre, Review, Title
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -55,17 +56,20 @@ class TitleSerializer(serializers.ModelSerializer):
                 "Произведение еще не вышло!"
             )
         return data
-      
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Review (Отзыв).
     """
-    title = serializers.PrimaryKeyRelatedField(queryset=Title.objects.all())
+    title = serializers.PrimaryKeyRelatedField(queryset=Title.objects.all(),
+                                               required=False)
 
     class Meta:
         model = Review
-        fields = ['id', 'title', 'author', 'score', 'text', 'pub_date']
-        read_only_fields = ['author', 'pub_date']
+        # fields = ['id', 'title', 'author', 'score', 'text', 'pub_date']
+        # read_only_fields = ['author', 'pub_date']
+        fields = ['id', 'title', 'score', 'text', 'pub_date']
 
     def validate_score(self, value):
         """
@@ -82,9 +86,11 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Comment.
     """
+    review = serializers.PrimaryKeyRelatedField(queryset=Review.objects.all(),
+                                                required=False)
+
     class Meta:
         model = Comment
-        fields = ['id', 'review', 'author', 'text', 'pub_date']
-        read_only_fields = ['author', 'pub_date']
-     
-
+        # fields = ['id', 'review', 'author', 'text', 'pub_date']
+        # read_only_fields = ['author', 'pub_date']
+        fields = ['id', 'review', 'text', 'pub_date']
