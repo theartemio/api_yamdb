@@ -43,6 +43,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150,)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=16, choices=CHOICES, default='user')
+    
     objects = UserManager()
 
     def __str__(self):

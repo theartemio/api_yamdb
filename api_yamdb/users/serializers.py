@@ -56,14 +56,14 @@ class UsersSerializer(serializers.ModelSerializer):
 
 
 class UsersMeSerializer(serializers.ModelSerializer):
-    # username = serializers.CharField(max_length=150, read_only=True)
+    username = serializers.CharField(max_length=150,)
     email = serializers.EmailField(max_length=254, required=False)
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
 
     def validate_username(self, value):
         pattern = r'^[\w.@+-]+\Z'

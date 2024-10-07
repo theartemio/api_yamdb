@@ -10,6 +10,8 @@ from django.core.mail import send_mail
 # from .models import User
 from django.contrib.auth import authenticate, get_user_model
 from .permissions import Admin, Moderator, Userr
+from rest_framework.decorators import api_view  # Импортировали декоратор
+
 
 from .serializers import RegistrationSerializer, LoginSerializer, UsersSerializer, UsersMeSerializer
 
@@ -81,7 +83,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
-    # permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (permissions.IsAuthenticated,)
 
 
 class UsersMeAPIView(APIView):
@@ -93,6 +95,7 @@ class UsersMeAPIView(APIView):
 
     def patch(self, request):
         # user = User.objects.get(username=self.request.user.username)
+        # instance = User.objects.filter(username=self.request.user.username)
         serializer = UsersMeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -100,6 +103,7 @@ class UsersMeAPIView(APIView):
 
 class UsersMeViewSet(viewsets.ModelViewSet):
     serializer_class = UsersMeSerializer
+    lookup_field = 'username'
 
     def get_queryset(self):
         return User.objects.filter(username=self.request.user.username)
@@ -107,6 +111,11 @@ class UsersMeViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(username=self.request.user.username)
 
+class UsersMe(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    http_method_names = ['get', 'patch']
+    lookup_field = 'username'
+    serializer_class = UsersMeSerializer
 
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
