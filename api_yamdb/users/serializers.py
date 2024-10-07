@@ -1,4 +1,5 @@
 import random
+import re
 
 from rest_framework import serializers
 
@@ -34,19 +35,41 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class UsersSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150, )
-    email = serializers.EmailField(max_length=255, )
-    first_name = serializers.CharField(max_length=150, )
-    last_name = serializers.CharField(max_length=150, )
+class UsersSerializer(serializers.ModelSerializer):
+    # username = serializers.CharField(max_length=150, )
+    # email = serializers.EmailField(max_length=254, )
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False)
 
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
 
-    """ class Meta:
+    def validate_username(self, value):
+        pattern = r'^[\w.@+-]+\Z'
+        if re.fullmatch(pattern, value):
+            return value
+        raise serializers.ValidationError()
+
+    """ def create(self, validated_data):
+        return User.objects.create_user(**validated_data) """
+
+
+class UsersMeSerializer(serializers.ModelSerializer):
+    # username = serializers.CharField(max_length=150, read_only=True)
+    email = serializers.EmailField(max_length=254, required=False)
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False)
+
+    class Meta:
         model = User
         fields = '__all__'
-        # fields = ['email', 'username'] """
+
+    def validate_username(self, value):
+        pattern = r'^[\w.@+-]+\Z'
+        if re.fullmatch(pattern, value) and value != 'me':
+            return value
+        raise serializers.ValidationError()
 
 
 class LoginSerializer(serializers.Serializer):
