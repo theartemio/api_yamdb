@@ -1,5 +1,7 @@
+from typing import Optional, Type
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.db.models import Model
 from rest_framework import filters, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -39,6 +41,32 @@ class AuthMixin:
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrStaff]
 
 
+class NestedViewSetMixin:
+    """
+    Миксин для получения id вложенного объекта и выполнения метода create.
+    """
+    parent_lookup_field: Optional[str] = None
+    parent_model: Optional[Type[Model]] = None
+    related_field: Optional[str] = None
+
+    def get_parent_object(self):
+        """
+        Получает родительский объект по переданному идентификатору.
+        """
+        parent_id = self.kwargs.get(self.parent_lookup_field)
+        return get_object_or_404(self.parent_model, pk=parent_id)
+
+    def perform_create(self, serializer):
+        """
+        Создает объект, передавая в сериализатор родительский объект.
+        """
+        parent_object = self.get_parent_object()
+        serializer.save(**{self.related_field: parent_object})
+
+    def get_queryset(self):
+        parent_id = self.kwargs.get(self.parent_lookup_field)
+        return self.queryset.filter(**{f'{self.related_field}_id': parent_id})
+
 
 class TitleViewSet(PaginationMixin, viewsets.ModelViewSet):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
@@ -68,48 +96,23 @@ class GenreViewSet(SearchMixin,
     serializer_class = GenreSerializer
 
 
-class ReviewViewSet(viewsets.ModelViewSet):  #  Add AuthMixin
+class ReviewViewSet(NestedViewSetMixin, viewsets.ModelViewSet):  #  Add AuthMixin
     """
     ViewSet для работы с отзывами.
     """
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-
-    def get_post_id(self):
-        """Возвращает id произведения."""
-        return self.kwargs.get("title_id")
-
-    def perform_create(self, serializer):
-        """Создает рецензию, указывая произведение с id, переданным в URL."""
-        title_id = self.get_post_id()
-        title = get_object_or_404(Title, pk=title_id)
-        # serializer.save(author=self.request.user, title=title)
-        serializer.save(title=title)
-
-    def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
-        return self.queryset.filter(title_id=title_id)
+    parent_lookup_field = 'title_id'
+    parent_model = Title
+    related_field = 'title'
 
 
-class CommentViewSet(viewsets.ModelViewSet):  #  Add AuthMixin
+class CommentViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     ViewSet для работы с комментариями.
     """
-
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-
-    def get_post_id(self):
-        """Возвращает id рецензии."""
-        return self.kwargs.get("review_id")
-
-    def perform_create(self, serializer):
-        """Создает коммент, указывая рецензию с id, переданным в URL."""
-        review_id = self.get_post_id()
-        review = get_object_or_404(Review, pk=review_id)
-        # serializer.save(author=self.request.user, title=title)
-        serializer.save(review=review)
-
-    def get_queryset(self):
-        review_id = self.kwargs.get('review_id')
-        return self.queryset.filter(review_id=review_id)
+    parent_lookup_field = 'review_id'
+    parent_model = Review
+    related_field = 'review'
