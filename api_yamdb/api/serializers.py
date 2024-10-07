@@ -49,12 +49,13 @@ class TitleSerializer(serializers.ModelSerializer):
         Проверяет что год выпуска произведения уже наступил
         (что произведение уже вышло)
         """
-        year = data["year"]
-        current_year = dt.date.today().year
-        if year > current_year:
-            raise serializers.ValidationError(
-                "Произведение еще не вышло!"
-            )
+        year = data.get("year")
+        if year:
+            current_year = dt.date.today().year
+            if year > current_year:
+                raise serializers.ValidationError(
+                    "Произведение еще не вышло!"
+                )
         return data
 
 
