@@ -1,12 +1,12 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
-from rest_framework import filters, viewsets
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
 from api.permissions import IsAuthorOrStaff
 from api.serializers import CommentSerializer, ReviewSerializer
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, permissions, viewsets
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from reviews.models import Category, Comment, Genre, Review, Title
+from users.permissions import IsAuthOrReadOnly
 
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 
@@ -34,10 +34,15 @@ class GetPostMixin:
     """Миксин для ограничения методов."""
     http_method_names = ['get', 'post', 'delete']
 
-class AuthMixin:
-    """Миксин для проверки авторства."""
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrStaff]
+class AuthorPermissionMixin:
+    """Миксин для проверки авторства и аутентификации."""
+    permission_classes = (IsAuthOrReadOnly,)
 
+
+
+class AuthorMixin:
+    """Миксин для проверки авторства."""
+    permission_classes = [IsAuthenticatedOrReadOnly,]
 
 
 class TitleViewSet(PaginationMixin, viewsets.ModelViewSet):
@@ -48,7 +53,8 @@ class TitleViewSet(PaginationMixin, viewsets.ModelViewSet):
     filterset_fields = ('category', 'genre', 'name', 'year')
 
 
-class CategoryViewSet(SearchMixin,
+class CategoryViewSet(AuthorMixin,
+                      SearchMixin,
                       PaginationMixin,
                       GetPostMixin,
                       SlugLookupMixin,
@@ -68,7 +74,7 @@ class GenreViewSet(SearchMixin,
     serializer_class = GenreSerializer
 
 
-class ReviewViewSet(viewsets.ModelViewSet):  #  Add AuthMixin
+class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
     """
     ViewSet для работы с отзывами.
     """
@@ -83,15 +89,14 @@ class ReviewViewSet(viewsets.ModelViewSet):  #  Add AuthMixin
         """Создает рецензию, указывая произведение с id, переданным в URL."""
         title_id = self.get_post_id()
         title = get_object_or_404(Title, pk=title_id)
-        # serializer.save(author=self.request.user, title=title)
-        serializer.save(title=title)
+        serializer.save(author=self.request.user, title=title)
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
         return self.queryset.filter(title_id=title_id)
 
 
-class CommentViewSet(viewsets.ModelViewSet):  #  Add AuthMixin
+class CommentViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
     """
     ViewSet для работы с комментариями.
     """
@@ -107,8 +112,7 @@ class CommentViewSet(viewsets.ModelViewSet):  #  Add AuthMixin
         """Создает коммент, указывая рецензию с id, переданным в URL."""
         review_id = self.get_post_id()
         review = get_object_or_404(Review, pk=review_id)
-        # serializer.save(author=self.request.user, title=title)
-        serializer.save(review=review)
+        serializer.save(author=self.request.user, review=review)
 
     def get_queryset(self):
         review_id = self.kwargs.get('review_id')

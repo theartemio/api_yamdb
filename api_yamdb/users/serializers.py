@@ -1,40 +1,69 @@
 import random
 import re
 
-from rest_framework import serializers
-
-# from .models import User
 from django.contrib.auth import authenticate, get_user_model
-
 from django.core.mail import send_mail
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from .models import User
 
 User = get_user_model()
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    """ Сериализация регистрации пользователя и создания нового. """
+    """ Сериализация регистрации пользователя и создания нового."""
 
     class Meta:
         model = User
-        # Перечислить все поля, которые могут быть включены в запрос
-        # или ответ, включая поля, явно указанные выше.
         fields = ['email', 'username']
-        # fields = '__all__'
 
     def create(self, validated_data):
-        # Использовать метод create_user, который мы
-        # написали ранее, для создания нового пользователя.
-        """ confirmation_code = random.randint(1000, 9999)
-        users_email = self.user.email
-        send_mail(
-            subject='Code',
-            message=f'confirmation code: {confirmation_code}',
-            from_email='api@yamdb.not',
-            recipient_list=[users_email],
-            fail_silently=True,
-        ) """
+        confirmation_code = random.randint(1000, 9999)  # Generate the confirmation code
+        validated_data['confirmation_code'] = confirmation_code  # Add it to validated data
         return User.objects.create_user(**validated_data)
 
+    def validate_username(self, value):
+        """
+        Проверяет что username не равен me
+        """
+        if value == 'me':
+            raise serializers.ValidationError(
+                "Имя me запрещено!"
+            )
+        return value
 
+
+class CustomTokenObtainSerializer(serializers.Serializer):
+    username = serializers.CharField(write_only=True)
+    confirmation_code = serializers.IntegerField(write_only=True)
+
+    def validate(self, data):
+        username = data.get('username')
+        confirmation_code = data.get('confirmation_code')
+        
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise serializers.ValidationError('Invalid username or confirmation code.')
+
+        if user.confirmation_code != confirmation_code:
+            raise serializers.ValidationError('Invalid username or confirmation code.')
+
+        return {'user': user}
+
+
+class UsersMeSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=150, read_only=True)
+    email = serializers.EmailField(max_length=254, required=False)
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False)
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+
+
+'''
 class UsersSerializer(serializers.ModelSerializer):
     # username = serializers.CharField(max_length=150, )
     # email = serializers.EmailField(max_length=254, )
@@ -51,25 +80,45 @@ class UsersSerializer(serializers.ModelSerializer):
             return value
         raise serializers.ValidationError()
 
-    """ def create(self, validated_data):
+
+class TokenObtainWithConfirmationCodeSerializer(TokenObtainPairSerializer):
+    username = serializers.CharField(required=True)  # Add username field
+    confirmation_code = serializers.IntegerField(required=True)  # Add confirmation_code field
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('password', None)  # Remove the password field requirement
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['name'] = user.username
+        return token
+
+    def validate(self, attrs):
+        print(attrs)  # Should show both username and confirmation_code now
+        username = attrs.get('username')
+        confirmation_code = attrs.get('confirmation_code')
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise serializers.ValidationError('User with this username does not exist.')
+
+        # Make sure you check the confirmation code
+        if user.confirmation_code != int(confirmation_code):
+            raise serializers.ValidationError('Invalid confirmation code.')
+
+        attrs['user'] = user  # Store user for later use
+        return super().validate(attrs)
+'''
+
+
+""" def create(self, validated_data):
         return User.objects.create_user(**validated_data) """
 
 
-class UsersMeSerializer(serializers.ModelSerializer):
-    # username = serializers.CharField(max_length=150, read_only=True)
-    email = serializers.EmailField(max_length=254, required=False)
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
 
-    class Meta:
-        model = User
-        fields = '__all__'
-
-    def validate_username(self, value):
-        pattern = r'^[\w.@+-]+\Z'
-        if re.fullmatch(pattern, value) and value != 'me':
-            return value
-        raise serializers.ValidationError()
 
 
 class LoginSerializer(serializers.Serializer):

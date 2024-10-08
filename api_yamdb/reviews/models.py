@@ -78,7 +78,8 @@ class Review(models.Model):
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
-    # user_id = models.IntegerField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name="reviews")
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -105,7 +106,8 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         related_name='comments',
     )
-    # user_id = models.IntegerField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               related_name="comments")
     text = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
 

@@ -1,7 +1,9 @@
-import jwt
-from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser, AbstractUser
 from datetime import datetime, timedelta
+
+import jwt
 from django.conf import settings
+from django.contrib.auth.models import (AbstractBaseUser, AbstractUser,
+                                        BaseUserManager, PermissionsMixin)
 from django.db import models
 
 CHOICES = (
@@ -13,16 +15,17 @@ CHOICES = (
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, username, email, role='user', bio='1', password=None):
+    def create_user(self, username, email, role='user', bio='1', confirmation_code=None, password=None):
         if username is None:
-            raise TypeError('Users must have a username.')
+            raise TypeError('Укажите имя пользователя!')
         if email is None:
-            raise TypeError('Users must have an email address.')
+            raise TypeError('Укажите эмейл!')
         user = self.model(
             username=username,
             email=self.normalize_email(email),
             role=role,
             bio=bio,
+            confirmation_code=confirmation_code
         )
         user.save()
         return user
@@ -37,6 +40,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     password = None
+    confirmation_code = models.SmallIntegerField(blank=True)
     email = models.EmailField(max_length=254, unique=True)
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=150,)

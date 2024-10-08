@@ -1,118 +1,115 @@
 import random
 import re
 from http import HTTPStatus
+
+# from .models import User
+from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework import status, viewsets, permissions, generics, filters
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import send_mail
-# from .models import User
-from django.contrib.auth import authenticate, get_user_model
-from .permissions import Admin, Moderator, Userr
+from rest_framework_simplejwt.tokens import (AccessToken, BlacklistedToken,
+                                             RefreshToken)
 
-from .serializers import RegistrationSerializer, LoginSerializer, UsersSerializer, UsersMeSerializer
+from .permissions import IsAdmin, IsModerator
+from .serializers import (RegistrationSerializer,
+                          UsersMeSerializer)
 
 User = get_user_model()
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from .serializers import CustomTokenObtainSerializer
+
+
+class CustomTokenObtainView(APIView):
+
+    def post(self, request, *args, **kwargs):
+        serializer = CustomTokenObtainSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'token': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
 
 
 class RegistrationAPIView(APIView):
     """
     Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
     """
-    # permission_classes = (AllowAny,)
-    # serializer_class = RegistrationSerializer
+    permission_classes = (AllowAny,)
+    serializer_class = RegistrationSerializer
 
-    def post(self, request):
-        serializer = RegistrationSerializer(data=request.data)
+    def post(self, request, *args, **kwargs):
+        """
+        Handle user registration via POST request.
+        """
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            pattern = r'^[\w.@+-]+\Z'
-            if request.data['username'] == 'me' or not re.fullmatch(pattern, request.data['username']):
-                return Response(
-                    serializer.errors,
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            user = User.objects.get(username=request.data['username'])
-            if user.email != request.data['email']:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            confirmation_code = random.randint(1000, 9999)
-            users_email = self.request.data['email']
+            user = serializer.save()
+            confirmation_code = user.confirmation_code
+            users_email = user.email
             send_mail(
                 subject='Code',
-                message=f'confirmation code: {confirmation_code}',
+                message=f'Confirmation code: {confirmation_code}',
                 from_email='api@yamdb.not',
                 recipient_list=[users_email],
                 fail_silently=True,
             )
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginAPIView(APIView):
-    serializer_class = LoginSerializer
-
-    def post(self, request):
-        """ if request.data['username'] != User.objects.get(username=request.data['username']):
-            return Response(status=status.HTTP_404_NOT_FOUND) """
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class UsersAPIView(APIView):
-
-    def get(self, request):
-        users = User.objects.all()
-        serializer = UsersSerializer(users, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = UsersSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class UsersViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UsersSerializer
-    pagination_class = PageNumberPagination
-    filter_backends = (filters.SearchFilter, )
-    search_fields = ('username',)
-    # permission_classes = (permissions.IsAdminUser,)
-
-
 class UsersMeAPIView(APIView):
+    """
+    Позволяет пользователю просматривать информацию о себе и менять ее.
 
+    Пермишены:
+        Просмотр информации и ее изменение доступно только
+        самому пользователю.
+        Проверка осуществляется с помощью кастомного пермишена
+        IsSameUserOrRestricted.
+    Методы:
+        Вьюсет работает только с методами GET и PATCH.
+    """
+    serializer_class = UsersMeSerializer
+    
     def get(self, request):
-        user = User.objects.filter(username=request.user.username)
+        user = request.user
         serializer = UsersMeSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request):
-        # user = User.objects.get(username=self.request.user.username)
-        serializer = UsersMeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        user = request.user
+        serializer = UsersMeSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UsersMeViewSet(viewsets.ModelViewSet):
-    serializer_class = UsersMeSerializer
+class UsersViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет администратора, позволяет просматривать список пользователей,
+    добавлять новых, удалять старых и менять информацию.
 
-    def get_queryset(self):
-        return User.objects.filter(username=self.request.user.username)
-
-    def perform_update(self, serializer):
-        serializer.save(username=self.request.user.username)
-
-
-class UserDetail(generics.RetrieveUpdateDestroyAPIView):
+    Пермишены:
+        Просмотр информации и ее изменение доступно только
+        самому пользователю.
+        Проверка осуществляется с помощью кастомного пермишена
+        IsSameUserOrRestricted.
+    Методы:
+        Вьюсет работает только с методами GET и PATCH.
+    """
     queryset = User.objects.all()
-    http_method_names = ['get', 'patch', 'delete']
-    # slug_field = 'username'
+    serializer_class = UsersMeSerializer  # Может не подойти
+    filter_backends = (filters.SearchFilter, )
     lookup_field = 'username'
-    serializer_class = UsersSerializer
-    # permission_classes = (Admin,)
-    permission_classes = (permissions.IsAdminUser,)
+    search_fields = ('username',)
