@@ -3,14 +3,14 @@ import random
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, status, viewsets, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .permissions_q import IsAdmin
-from .serializers import RegistrationSerializer, UsersMeSerializer
+from .serializers import RegistrationSerializer, UsersMeSerializer, UsersSerializer
 
 
 from rest_framework import status
@@ -106,7 +106,7 @@ class UsersMeAPIView(APIView):
     Методы:
     Вьюсет работает только с методами GET и PATCH.
     """
-    serializer_class = UsersMeSerializer
+    # serializer_class = UsersMeSerializer
     
     def get(self, request):
         user = request.user
@@ -132,7 +132,7 @@ class UsersViewSet(
     """
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
-    serializer_class = UsersMeSerializer  # Может не подойти
+    serializer_class = UsersSerializer  # Может не подойти
     filter_backends = (filters.SearchFilter, )
     lookup_field = 'username'
     search_fields = ('username',)

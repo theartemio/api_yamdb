@@ -55,7 +55,7 @@ class CustomTokenObtainSerializer(serializers.Serializer):
         return {'user': user}
 
 
-class UsersMeSerializer(serializers.ModelSerializer):
+""" class UsersMeSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=150, read_only=True)
     email = serializers.EmailField(max_length=254, required=False)
     first_name = serializers.CharField(max_length=150, required=False)
@@ -69,14 +69,33 @@ class UsersMeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role'] """
 
 
 class UsersMeSerializer(serializers.ModelSerializer):
 
-    email = serializers.EmailField(max_length=254, required=False)
+    # email = serializers.EmailField(max_length=254, required=False)
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
+    role = serializers.CharField(max_length=16, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+
+    def validate_username(self, value):
+        pattern = r'^[\w.@+-]+\Z'
+        if re.fullmatch(pattern, value) and value != 'me':
+            return value
+        raise serializers.ValidationError()
+    
+
+class UsersSerializer(serializers.ModelSerializer):
+
+    # email = serializers.EmailField(max_length=254, required=False)
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False)
+    # role = serializers.CharField(max_length=16, read_only=True)
 
     class Meta:
         model = User
