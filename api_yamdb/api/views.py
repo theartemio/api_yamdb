@@ -4,12 +4,12 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from api.permissions import IsAuthorOrStaff
+from api.permissions import IsAuthorOrStaff, IsAuthOrReadOnly
 from api.serializers import CommentSerializer, ReviewSerializer
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.permissions_q import (IsAdminOrReadonly, IsAuthorOrReadOnly,
                                  IsModeratorOrAdmin)
-
+from .permissions import IsAuthorOrStaff
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 
 
@@ -29,17 +29,14 @@ class SlugLookupMixin:
     lookup_field = 'slug'
 
 
-# Я не уверен, что это нужно, но в Redoc не прописаны методы patch для
-# категорий и жанров, поэтому пусть пока будет на случай,
-# если тесты это проверяют.
 class GetPostMixin:
     """Миксин для ограничения методов."""
     http_method_names = ['get', 'post', 'delete']
 
 class AuthorPermissionMixin:
     """Миксин для проверки авторства и аутентификации."""
-    # permission_classes = (IsAuthOrReadOnly,)
-    pass
+    permission_classes = (IsAuthOrReadOnly,)
+
 
 class AdminOrReadOnlyMixin:
     """Миксин для проверки админства."""
@@ -83,13 +80,13 @@ class GenreViewSet(AdminOrReadOnlyMixin,
     serializer_class = GenreSerializer
 
 
-class ReviewViewSet(viewsets.ModelViewSet):
+class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
     """
     ViewSet для работы с отзывами.
     """
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthorOrReadOnly, IsModeratorOrAdmin] 
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_post_id(self):
         """Возвращает id произведения."""
@@ -113,7 +110,7 @@ class CommentViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthorOrReadOnly, IsModeratorOrAdmin]
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_post_id(self):
         """Возвращает id рецензии."""
