@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import (AccessToken, BlacklistedToken,
                                              RefreshToken)
 
-from .permissions import IsAdmin, IsModerator
+from .permissions_q import IsAdmin, IsModerator
 from .serializers import (RegistrationSerializer,
                           UsersMeSerializer)
 
@@ -26,7 +26,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import CustomTokenObtainSerializer
-from .permissions import IsAdmin
+from .permissions_q import IsAdmin
+
+from rest_framework import serializers
 
 
 class CustomTokenObtainView(APIView):
@@ -48,7 +50,7 @@ class AdminPermissionMixin:
     permission_classes = (IsAdmin,)
 
 
-
+'''
 class RegistrationAPIView(APIView):
     """
     Allow all users (authenticated and unauthenticated) access to this endpoint.
@@ -62,11 +64,8 @@ class RegistrationAPIView(APIView):
         """
         username = request.data.get("username")
         email = request.data.get("email")
-
-        # Check if user exists
         user, created = User.objects.get_or_create(username=username)
 
-        # If user exists, update confirmation_code, otherwise create a new user
         confirmation_code = random.randint(1000, 9999)
         user.confirmation_code = confirmation_code
         user.email = email  # Update email only if you want to allow email changes
@@ -82,7 +81,71 @@ class RegistrationAPIView(APIView):
         )
 
         return Response(status=status.HTTP_200_OK)
+'''
 
+
+class RegistrationAPIView(APIView):
+    """
+    Handles user registration or confirmation code resend via POST request.
+    """
+    permission_classes = (AllowAny,)
+    serializer_class = RegistrationSerializer
+
+
+    def post(self, request, *args, **kwargs):
+        """
+        Process registration logic:
+        - If user with email+username pair exists, resend confirmation code.
+        - If user with username exists but email differs, or vice versa, return 400.
+        - If no such user exists, create a new user.
+        """
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data.get('username')
+            email = serializer.validated_data.get('email')
+
+            try:
+                user = User.objects.get(email=email)
+
+                # If username doesn't match, return bad request
+                if user.username != username:
+                    return Response(
+                        {"error": "Username does not match the registered email."}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            except User.DoesNotExist:
+                # Email doesn't exist, now check if the username exists with a different email
+                try:
+                    user = User.objects.get(username=username)
+                    
+                    # If we found a user by username but emails don't match, return bad request
+                    if user.email != email:
+                        return Response(
+                            {"error": "Email does not match the registered username."}, 
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                except User.DoesNotExist:
+                    # If both email and username don't exist, create a new user
+                    user = User.objects.create(username=username, email=email)
+
+            # Generate and update confirmation code for the user
+            confirmation_code = random.randint(1000, 9999)
+            user.confirmation_code = confirmation_code
+            user.save()
+
+            # Send confirmation code via email
+            send_mail(
+                subject='Code',
+                message=f'Confirmation code: {confirmation_code}',
+                from_email='api@yamdb.not',
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UsersMeAPIView(APIView):

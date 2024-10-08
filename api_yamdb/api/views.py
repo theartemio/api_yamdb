@@ -6,7 +6,7 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from reviews.models import Category, Comment, Genre, Review, Title
-from users.permissions import IsAdminOrReadonly, IsAuthorOrReadOnly, IsModeratorOrAdmin
+from users.permissions_q import IsAdminOrReadonly, IsAuthorOrReadOnly, IsModeratorOrAdmin
 
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 
@@ -41,7 +41,8 @@ class AuthorPermissionMixin:
 
 class AdminOrReadOnlyMixin:
     """Миксин для проверки админства."""
-    permission_classes = (IsAdminOrReadonly,)
+    permission_classes = (IsAdminOrReadonly, )
+    
 
 
 class AuthorMixin:

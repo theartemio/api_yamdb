@@ -1,5 +1,6 @@
 import random
 import re
+from django.http import Http404
 
 from django.contrib.auth import authenticate, get_user_model
 from django.core.mail import send_mail
@@ -15,22 +16,27 @@ User = get_user_model()
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serialization for user registration and confirmation code resend."""
 
+    email = serializers.EmailField(required=True, max_length=254,)
+    username = serializers.CharField(required=True, max_length=150,)
+
     class Meta:
         model = User
         fields = ['email', 'username']
 
     def validate_username(self, value):
         """
-        Ensure username is not 'me'.
+        Ensure username is not 'me' and matches pattern.
         """
-        if value == 'me':
-            raise serializers.ValidationError("Username 'me' is not allowed!")
+        pattern = r'^[\w.@+-]+\Z'
+        if value == 'me' or not re.fullmatch(pattern, value):
+            raise serializers.ValidationError("Такое имя пользователя недопустимо!")
         return value
 
 
+
 class CustomTokenObtainSerializer(serializers.Serializer):
-    username = serializers.CharField(write_only=True)
-    confirmation_code = serializers.IntegerField(write_only=True)
+    username = serializers.CharField(write_only=True, required=True)
+    confirmation_code = serializers.IntegerField(write_only=True, required=True)
 
     def validate(self, data):
         username = data.get('username')
@@ -39,7 +45,7 @@ class CustomTokenObtainSerializer(serializers.Serializer):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise serializers.ValidationError('Invalid username or confirmation code.')
+            raise Http404
 
         if user.confirmation_code != confirmation_code:
             raise serializers.ValidationError('Invalid username or confirmation code.')
@@ -55,15 +61,30 @@ class UsersMeSerializer(serializers.ModelSerializer):
     
     def validate_username(self, value):
         pattern = r'^[\w.@+-]+\Z'
-        if not re.fullmatch(pattern, value):
-            raise serializers.ValidationError(
-                "Username must only contain letters, digits, and @/./+/-/_ characters."
-            )
-        return value
+        if re.fullmatch(pattern, value):
+            return value
+        raise serializers.ValidationError()
     
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+
+
+class UsersMeSerializer(serializers.ModelSerializer):
+    # username = serializers.CharField(max_length=150,)
+    email = serializers.EmailField(max_length=254, required=False)
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+
+    def validate_username(self, value):
+        pattern = r'^[\w.@+-]+\Z'
+        if re.fullmatch(pattern, value) and value != 'me':
+            return value
+        raise serializers.ValidationError()
 
 
 '''
