@@ -1,15 +1,14 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from api.permissions import IsAuthorOrStaff, IsAuthOrReadOnly
+from api.permissions import IsAuthOrReadOnly
 from api.serializers import CommentSerializer, ReviewSerializer
 from reviews.models import Category, Comment, Genre, Review, Title
-from users.permissions_q import (IsAdminOrReadonly, IsAuthorOrReadOnly,
-                                 IsModeratorOrAdmin)
-from .permissions import IsAuthorOrStaff
+from users.permissions import IsAdminOrReadonly
+
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 
 
@@ -41,7 +40,6 @@ class AuthorPermissionMixin:
 class AdminOrReadOnlyMixin:
     """Миксин для проверки админства."""
     permission_classes = (IsAdminOrReadonly, )
-    
 
 
 class AuthorMixin:
@@ -56,6 +54,7 @@ class TitleViewSet(AdminOrReadOnlyMixin,
     serializer_class = TitleSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category', 'genre', 'name', 'year')
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
 
 class CategoryViewSet(AdminOrReadOnlyMixin,

@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .permissions_q import IsAdmin
+from .permissions import IsAdmin
 from .serializers import RegistrationSerializer, UsersMeSerializer
 
 

@@ -83,14 +83,14 @@ class Review(models.Model):
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        '''
+
         constraints = [
             models.UniqueConstraint(
-                fields=['title', 'user_id'],
+                fields=['title', 'author'],
                 name='unique_review',
             )
         ]
-        '''
+
         ordering = ['-pub_date']
 
     def __str__(self):
