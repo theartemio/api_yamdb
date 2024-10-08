@@ -34,7 +34,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return value
 
 
-
 class CustomTokenObtainSerializer(serializers.Serializer):
     """Кастомный сериализатор для получения токена."""
     username = serializers.CharField(write_only=True, required=True)
@@ -53,23 +52,6 @@ class CustomTokenObtainSerializer(serializers.Serializer):
             raise serializers.ValidationError('Invalid username or confirmation code.')
 
         return {'user': user}
-
-
-""" class UsersMeSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=150, read_only=True)
-    email = serializers.EmailField(max_length=254, required=False)
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
-    
-    def validate_username(self, value):
-        pattern = r'^[\w.@+-]+\Z'
-        if re.fullmatch(pattern, value):
-            return value
-        raise serializers.ValidationError()
-    
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role'] """
 
 
 class UsersMeSerializer(serializers.ModelSerializer):
@@ -101,6 +83,7 @@ class UsersSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
 
+
     def validate_username(self, value):
         pattern = r'^[\w.@+-]+\Z'
         if re.fullmatch(pattern, value) and value != 'me':
@@ -113,4 +96,3 @@ class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255,)
     confirmate_code = serializers.CharField(max_length=128,)
     token = serializers.CharField(max_length=255,)
-

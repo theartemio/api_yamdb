@@ -69,8 +69,13 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ['id', 'title', 'author', 'score', 'text', 'pub_date']
+        fields = ['id', 'title', 'text', 'author', 'score', 'pub_date']
         read_only_fields = ['author', 'pub_date']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation.pop('title', None)
+        return representation
 
 
     def validate_score(self, value):
@@ -90,8 +95,14 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     review = serializers.PrimaryKeyRelatedField(queryset=Review.objects.all(),
                                                 required=False)
+    author = serializers.SlugRelatedField(slug_field="username", read_only=True)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation.pop('review', None)
+        return representation
 
     class Meta:
         model = Comment
-        fields = ['id', 'review', 'author', 'text', 'pub_date']
+        fields = ['id', 'review', 'text', 'author', 'pub_date']
         read_only_fields = ['author', 'pub_date']
