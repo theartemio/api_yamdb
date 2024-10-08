@@ -13,3 +13,6 @@ urlpatterns = [
     path('users/me/', UsersMeAPIView.as_view()),
     path('', include(router.urls)),
 ]
+
+
+ 
