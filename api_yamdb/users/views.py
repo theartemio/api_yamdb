@@ -1,6 +1,10 @@
 import random
 import re
+from django.http import Http404
 from http import HTTPStatus
+from rest_framework.exceptions import ValidationError
+from rest_framework import mixins
+from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, viewsets, permissions, generics, filters
 from rest_framework.permissions import AllowAny
@@ -11,7 +15,7 @@ from django.core.mail import send_mail
 from django.contrib.auth import authenticate, get_user_model
 from .permissions import Admin, Moderator, Userr
 from rest_framework.decorators import api_view  # Импортировали декоратор
-
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from .serializers import RegistrationSerializer, LoginSerializer, UsersSerializer, UsersMeSerializer
 
@@ -22,24 +26,70 @@ class RegistrationAPIView(APIView):
     """
     Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
     """
-    # permission_classes = (AllowAny,)
-    # serializer_class = RegistrationSerializer
-
     def post(self, request):
-        serializer = RegistrationSerializer(data=request.data)
+        data = request.data
+        # username = data.get('username', None)
+        # email = data.get('email', None)
+        serializer = RegistrationSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.data['email']
+        username = serializer.data['username']
+        pattern = r'^[\w.@+-]+\Z'
+        if username == 'me' or not re.fullmatch(pattern, username):
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            user = User.objects.get(username=username, email=email)
+        except User.DoesNotExist:
+            user = None
+        if User.objects.filter(username=username, email=email).exists():
+            confirmate_code = user.confirmate_code
+            send_mail(
+                subject='Code',
+                message=f'confirmation code: {confirmate_code}',
+                from_email='api@yamdb.not',
+                recipient_list=[email],
+                fail_silently=True,
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            user = User.objects.create(
+                username=serializer.validated_data['username'],
+                email=serializer.validated_data['email']
+            )
+            user.save()
+            confirmate_code = user.confirmate_code
+            send_mail(
+                subject='Code',
+                message=f'confirmation code: {confirmate_code}',
+                from_email='api@yamdb.not',
+                recipient_list=[email],
+                fail_silently=True,
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+    """ def post(self, request):
+        data = request.data
+        username = data.get('username', None)
+        email = data.get('email', None)
+        serializer = RegistrationSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             pattern = r'^[\w.@+-]+\Z'
-            if request.data['username'] == 'me' or not re.fullmatch(pattern, request.data['username']):
+            if username == 'me' or not re.fullmatch(pattern, username):
                 return Response(
                     serializer.errors,
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            user = User.objects.get(username=request.data['username'])
-            if user.email != request.data['email']:
+            user = User.objects.get(username=username)
+            if user.email != email:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            confirmation_code = random.randint(1000, 9999)
-            users_email = self.request.data['email']
+            confirmation_code = user.confirmate_code
+            users_email = email
             send_mail(
                 subject='Code',
                 message=f'confirmation code: {confirmation_code}',
@@ -48,19 +98,33 @@ class RegistrationAPIView(APIView):
                 fail_silently=True,
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) """
 
 
-class LoginAPIView(APIView):
-    serializer_class = LoginSerializer
+class LoginViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    # model = User
+    permission_classes = [AllowAny,]
 
-    def post(self, request):
-        """ if request.data['username'] != User.objects.get(username=request.data['username']):
-            return Response(status=status.HTTP_404_NOT_FOUND) """
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        username = data.get('username',)
+        confirmate_code = data.get('confirmate_code',)
+        try:
+            user = User.objects.get(username=username)
+            if username and username == user.username and confirmate_code and confirmate_code == user.confrirmate_code:
+                user.is_active = True
+                if user.is_superuser:
+                    user.role = 'admin'
+                user.save()
+                refresh = AccessToken.for_user(user)
+                return Response(
+                    {'acces': str(refresh), },
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            raise ValidationError()
 
 
 class UsersAPIView(APIView):

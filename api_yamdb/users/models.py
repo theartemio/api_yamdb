@@ -1,4 +1,5 @@
 import jwt
+import random
 from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser, AbstractUser
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -13,7 +14,9 @@ CHOICES = (
 
 class UserManager(BaseUserManager):
 
+
     def create_user(self, username, email, role='user', bio='1', password=None):
+        code = random.randint(1000, 9999)
         if username is None:
             raise TypeError('Users must have a username.')
         if email is None:
@@ -23,6 +26,7 @@ class UserManager(BaseUserManager):
             email=self.normalize_email(email),
             role=role,
             bio=bio,
+            confirmate_code=code,
         )
         user.save()
         return user
@@ -43,48 +47,8 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150,)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=16, choices=CHOICES, default='user')
-    
+    confirmate_code = models.CharField(max_length=4,)
     objects = UserManager()
 
     def __str__(self):
         return self.email
-
-
-""" class User(AbstractBaseUser, PermissionsMixin):
-
-    # username = models.CharField(db_index=True, max_length=255)
-    username = models.CharField(max_length=150, unique=True)
-    email = models.EmailField(max_length=254, unique=True)
-    first_name = models.CharField(max_length=150,)
-    last_name = models.CharField(max_length=150,)
-    bio = models.CharField(max_length=255)
-    role = models.CharField(max_length=16, choices=CHOICES, default='user')
-    is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', ]
-    objects = UserManager()
-
-    def __str__(self):
-        return self.email
-
-    @property
-    def token(self):
-        return self._generate_jwt_token()
-
-    def get_full_name(self):
-        return self.username
-
-    def get_short_name(self):
-        return self.username
-
-    def _generate_jwt_token(self):
-        dt = datetime.now() + timedelta(days=1)
-
-        token = jwt.encode({
-            'id': self.pk,
-            'exp': int(dt.strftime('%s'))
-        }, settings.SECRET_KEY, algorithm='HS256')
-
-        return token.decode('utf-8')
- """
