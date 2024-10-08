@@ -6,7 +6,7 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from reviews.models import Category, Comment, Genre, Review, Title
-from users.permissions import IsAuthOrReadOnly
+from users.permissions import IsAdminOrReadonly, IsAuthorOrReadOnly, IsModeratorOrAdmin
 
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 
@@ -36,8 +36,12 @@ class GetPostMixin:
 
 class AuthorPermissionMixin:
     """Миксин для проверки авторства и аутентификации."""
-    permission_classes = (IsAuthOrReadOnly,)
+    # permission_classes = (IsAuthOrReadOnly,)
+    pass
 
+class AdminOrReadOnlyMixin:
+    """Миксин для проверки админства."""
+    permission_classes = (IsAdminOrReadonly,)
 
 
 class AuthorMixin:
@@ -45,7 +49,8 @@ class AuthorMixin:
     permission_classes = [IsAuthenticatedOrReadOnly,]
 
 
-class TitleViewSet(PaginationMixin, viewsets.ModelViewSet):
+class TitleViewSet(AdminOrReadOnlyMixin,
+                   PaginationMixin, viewsets.ModelViewSet):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
@@ -53,7 +58,7 @@ class TitleViewSet(PaginationMixin, viewsets.ModelViewSet):
     filterset_fields = ('category', 'genre', 'name', 'year')
 
 
-class CategoryViewSet(AuthorMixin,
+class CategoryViewSet(AdminOrReadOnlyMixin,
                       SearchMixin,
                       PaginationMixin,
                       GetPostMixin,
@@ -64,7 +69,8 @@ class CategoryViewSet(AuthorMixin,
     serializer_class = CategorySerializer
 
 
-class GenreViewSet(SearchMixin,
+class GenreViewSet(AdminOrReadOnlyMixin,
+                   SearchMixin,
                    PaginationMixin,
                    GetPostMixin,
                    SlugLookupMixin,
@@ -74,12 +80,13 @@ class GenreViewSet(SearchMixin,
     serializer_class = GenreSerializer
 
 
-class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
+class ReviewViewSet(viewsets.ModelViewSet):
     """
     ViewSet для работы с отзывами.
     """
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [IsAuthorOrReadOnly, IsModeratorOrAdmin] 
 
     def get_post_id(self):
         """Возвращает id произведения."""
@@ -103,6 +110,7 @@ class CommentViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+    permission_classes = [IsAuthorOrReadOnly, IsModeratorOrAdmin]
 
     def get_post_id(self):
         """Возвращает id рецензии."""

@@ -26,9 +26,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import CustomTokenObtainSerializer
+from .permissions import IsAdmin
 
 
 class CustomTokenObtainView(APIView):
+    permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
         serializer = CustomTokenObtainSerializer(data=request.data)
@@ -41,31 +43,46 @@ class CustomTokenObtainView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class AdminPermissionMixin:
+    """Миксин для проверки авторства и аутентификации."""
+    permission_classes = (IsAdmin,)
+
+
+
 class RegistrationAPIView(APIView):
     """
-    Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
+    Allow all users (authenticated and unauthenticated) access to this endpoint.
     """
     permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer
 
     def post(self, request, *args, **kwargs):
         """
-        Handle user registration via POST request.
+        Handle user registration or confirmation code resend via POST request.
         """
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            confirmation_code = user.confirmation_code
-            users_email = user.email
-            send_mail(
-                subject='Code',
-                message=f'Confirmation code: {confirmation_code}',
-                from_email='api@yamdb.not',
-                recipient_list=[users_email],
-                fail_silently=True,
-            )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        username = request.data.get("username")
+        email = request.data.get("email")
+
+        # Check if user exists
+        user, created = User.objects.get_or_create(username=username)
+
+        # If user exists, update confirmation_code, otherwise create a new user
+        confirmation_code = random.randint(1000, 9999)
+        user.confirmation_code = confirmation_code
+        user.email = email  # Update email only if you want to allow email changes
+        user.save()
+
+        # Send confirmation code
+        send_mail(
+            subject='Code',
+            message=f'Confirmation code: {confirmation_code}',
+            from_email='api@yamdb.not',
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+
+        return Response(status=status.HTTP_200_OK)
+
 
 
 class UsersMeAPIView(APIView):
@@ -95,7 +112,9 @@ class UsersMeAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UsersViewSet(viewsets.ModelViewSet):
+class UsersViewSet(
+    AdminPermissionMixin,
+    viewsets.ModelViewSet):
     """
     Вьюсет администратора, позволяет просматривать список пользователей,
     добавлять новых, удалять старых и менять информацию.
@@ -108,6 +127,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     Методы:
         Вьюсет работает только с методами GET и PATCH.
     """
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UsersMeSerializer  # Может не подойти
     filter_backends = (filters.SearchFilter, )

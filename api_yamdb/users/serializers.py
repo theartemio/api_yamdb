@@ -11,26 +11,20 @@ from .models import User
 
 User = get_user_model()
 
+
 class RegistrationSerializer(serializers.ModelSerializer):
-    """ Сериализация регистрации пользователя и создания нового."""
+    """Serialization for user registration and confirmation code resend."""
 
     class Meta:
         model = User
         fields = ['email', 'username']
 
-    def create(self, validated_data):
-        confirmation_code = random.randint(1000, 9999)  # Generate the confirmation code
-        validated_data['confirmation_code'] = confirmation_code  # Add it to validated data
-        return User.objects.create_user(**validated_data)
-
     def validate_username(self, value):
         """
-        Проверяет что username не равен me
+        Ensure username is not 'me'.
         """
         if value == 'me':
-            raise serializers.ValidationError(
-                "Имя me запрещено!"
-            )
+            raise serializers.ValidationError("Username 'me' is not allowed!")
         return value
 
 
@@ -58,6 +52,15 @@ class UsersMeSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=254, required=False)
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
+    
+    def validate_username(self, value):
+        pattern = r'^[\w.@+-]+\Z'
+        if not re.fullmatch(pattern, value):
+            raise serializers.ValidationError(
+                "Username must only contain letters, digits, and @/./+/-/_ characters."
+            )
+        return value
+    
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
