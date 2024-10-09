@@ -34,7 +34,7 @@ class CustomTokenObtainView(APIView):
 
 class AdminPermissionMixin:
     """Миксин для проверки авторства и аутентификации."""
-    permission_classes = (IsAdmin,)
+    permission_classes = (IsAdminOrRestricted,)
 
 
 class RegistrationAPIView(APIView):
@@ -109,7 +109,7 @@ class UsersMeAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UsersViewSet(viewsets.ModelViewSet):
+class UsersViewSet(AdminPermissionMixin, viewsets.ModelViewSet):
     """
     Вьюсет просмотра списка пользователей администраторами.
     Позволяет админу просматривать список пользователей, 
@@ -118,7 +118,6 @@ class UsersViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = (IsAdmin,)
     filter_backends = (filters.SearchFilter,)
     lookup_field = 'username'
     search_fields = ('username',)
