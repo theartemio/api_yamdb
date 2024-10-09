@@ -89,6 +89,17 @@ class ReviewSerializer(serializers.ModelSerializer):
         representation.pop('title', None)
         return representation
 
+    def validate(self, data):
+        """Проверяет, добавлял ли автор уже отзыв для данного произведения."""
+        request = self.context['request']
+        title = data.get('title')  # Get the title from the request data
+        user = request.user  # The current user (author)
+
+        # Check if the user already reviewed this title (before saving)
+        if self.instance is None and Review.objects.filter(author=user, title=title).exists():
+            raise serializers.ValidationError("You have already reviewed this title.")
+        
+        return data
 
     def validate_score(self, value):
         """

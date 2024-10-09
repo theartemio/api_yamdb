@@ -1,9 +1,6 @@
 from rest_framework import permissions 
 
 
-
-
-# Работает
 class IsAuthOrReadOnly(permissions.BasePermission):
     """Проверяет, что пользователь залогинен и он - автор записи."""
 
