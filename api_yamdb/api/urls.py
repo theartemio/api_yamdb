@@ -8,7 +8,7 @@ from .views import (CategoryViewSet, CommentViewSet, GenreViewSet,
 
 router = DefaultRouter()
 router.register("titles", TitleViewSet)
-
+router.register("categories", CategoryViewSet)
 router.register("genres", GenreViewSet)
 router.register(
     r'titles/(?P<title_id>\d+)/reviews',
@@ -21,28 +21,13 @@ router.register(
     basename='comments',
 )
 
-categories_list = CategoryViewSet.as_view({
-    "get": "list",
-    "post": "create"
-})
-category_detail = CategoryViewSet.as_view({
-    "put": "update",
-    "patch": "partial_update",
-    "delete": "destroy"
-})
-
 
 
 urlpatterns = [
     path("v1/", include(router.urls)),
-    path("v1/", include('users.urls')),
-    path("v1/categories/<int:id>/",
-         category_detail,
-         name="category-detail"),
-    path("v1/categories/",
-         categories_list,
-         name="categories-list")     
-]
+    path("v1/", include('users.urls')),]
+
+
 
 if settings.DEBUG:
     urlpatterns += static(

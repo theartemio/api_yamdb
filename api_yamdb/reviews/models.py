@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
-User = get_user_model()  # temp user model
+User = get_user_model()
 
 
 class NameSlugMixin(models.Model):
@@ -16,17 +18,6 @@ class NameSlugMixin(models.Model):
 
     def __str__(self):
         return self.name
-
-
-    def average_rating(self):
-        """
-        Метод для расчета среднего рейтинга произведения.
-        """
-        reviews = self.reviews.all()
-        if reviews.exists():
-            return sum(review.score for review in reviews) / reviews.count()
-        return 0
-
 
 
 class Category(NameSlugMixin, models.Model):
@@ -48,6 +39,8 @@ class Title(models.Model):
         у одного произведения допускается несколько жанров,
         переданных списком.
     """
+
+
     name = models.CharField(max_length=256)
     year = models.PositiveSmallIntegerField()
     description = models.TextField(blank=True, null=True)
@@ -58,7 +51,7 @@ class Title(models.Model):
                                  null=True,
                                  blank=False
                                  )
-    rating = models.PositiveSmallIntegerField(null=True)  # поле для рейтинга
+    rating = models.PositiveSmallIntegerField(null=True)
 
     def __str__(self):
         return self.name
@@ -83,7 +76,6 @@ class Review(models.Model):
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],

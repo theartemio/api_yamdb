@@ -23,10 +23,15 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Title."""
+    
     category = serializers.SlugRelatedField(queryset=Category.objects.all(),
                                             required=True,
-                                            allow_null=True,
-                                            slug_field="slug")
+                                            slug_field="slug",
+                                            write_only=True)
+    
+    category_detail = CategorySerializer(source='category', read_only=True)
+
+
     genre = serializers.SlugRelatedField(queryset=Genre.objects.all(),
                                          slug_field="slug",
                                          many=True,
@@ -41,8 +46,15 @@ class TitleSerializer(serializers.ModelSerializer):
                   "rating",
                   "description",
                   "genre",
-                  "category")
+                  "category",
+                  "category_detail")
         model = Title
+    
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret.pop('category', None)
+        return ret
 
     def validate(self, data):
         """
