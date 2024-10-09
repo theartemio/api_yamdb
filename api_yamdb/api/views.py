@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
+from rest_framework import filters, viewsets, permissions
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -10,6 +10,21 @@ from reviews.models import Category, Comment, Genre, Review, Title
 from users.permissions import IsAdminOrReadonly
 
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
+
+class IsModerator(permissions.BasePermission):
+    """
+    Пермишен для модератора.
+    """
+    def has_permission(self, request, view):
+        if bool(request.user and request.user.is_authenticated):
+            if request.user.is_superuser:
+                return True
+            if request.user.role == 'moderator':
+                return True
+            return False
+    def has_object_permission(self, request, view, obj):
+        return True
+        # return request.user.role == 'admin'
 
 
 class SearchMixin:

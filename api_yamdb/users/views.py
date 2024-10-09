@@ -121,9 +121,7 @@ class UsersMeAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UsersViewSet(
-    AdminPermissionMixin,
-    viewsets.ModelViewSet):
+class UsersViewSet(viewsets.ModelViewSet):
     """
     Вьюсет администратора, позволяет просматривать список пользователей,
     добавлять новых, удалять старых и менять информацию.
@@ -133,6 +131,7 @@ class UsersViewSet(
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UsersSerializer  # Может не подойти
+    permission_classes = (IsAdmin,)
     filter_backends = (filters.SearchFilter, )
     lookup_field = 'username'
     search_fields = ('username',)

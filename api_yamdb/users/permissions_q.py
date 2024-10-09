@@ -12,8 +12,11 @@ class IsAdmin(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         if bool(request.user and request.user.is_authenticated):
+            if request.user.is_superuser:
+                return True
             if request.user.role == 'admin':
                 return True
             return False
     def has_object_permission(self, request, view, obj):
-        return request.user.role == 'admin' and request.user.is_authenticated
+        return True
+        # return request.user.role == 'admin'
