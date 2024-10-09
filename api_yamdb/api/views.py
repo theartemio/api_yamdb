@@ -47,6 +47,7 @@ class GetPostMixin:
     """Миксин для ограничения методов."""
     http_method_names = ['get', 'post', 'delete']
 
+
 class AuthorPermissionMixin:
     """Миксин для проверки авторства и аутентификации."""
     permission_classes = (IsAuthOrReadOnly,)
@@ -65,11 +66,13 @@ class AuthorMixin:
 class TitleViewSet(AdminOrReadOnlyMixin,
                    PaginationMixin, viewsets.ModelViewSet):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
+    # queryset = Title.objects.select_related('category').all()
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category', 'genre', 'name', 'year')
     http_method_names = ['get', 'post', 'patch', 'delete']
+    
 
 
 class CategoryViewSet(AdminOrReadOnlyMixin,
@@ -81,6 +84,10 @@ class CategoryViewSet(AdminOrReadOnlyMixin,
     """Возвращает список категорий и позволяет их добавлять и редактировать."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    lookup_field = 'slug'
+
+    def retrieve(self, request, *args, **kwargs):
+        return response.Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class GenreViewSet(AdminOrReadOnlyMixin,
@@ -92,7 +99,10 @@ class GenreViewSet(AdminOrReadOnlyMixin,
     """Возвращает список жанров и позволяет их добавлять и редактировать."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    lookup_field = 'slug'
 
+    def retrieve(self, request, *args, **kwargs):
+        return response.Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
     """
