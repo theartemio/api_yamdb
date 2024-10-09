@@ -20,7 +20,8 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ("name", "slug",)
         model = Category
 
-
+# Основной сериализатор тайтлов,
+# Нужен для списка.
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Title."""
     
@@ -28,17 +29,12 @@ class TitleSerializer(serializers.ModelSerializer):
                                             required=True,
                                             slug_field="slug",
                                             write_only=True)
-    
-    category_detail = CategorySerializer(source='category', read_only=True)
-
-
     genre = serializers.SlugRelatedField(queryset=Genre.objects.all(),
                                          slug_field="slug",
                                          many=True,
                                          required=False,
                                          allow_null=True,
                                          )
-
     class Meta:
         fields = ("id",
                   "name",
@@ -47,14 +43,8 @@ class TitleSerializer(serializers.ModelSerializer):
                   "description",
                   "genre",
                   "category",
-                  "category_detail")
+                  )
         model = Title
-    
-
-    def to_representation(self, instance):
-        ret = super().to_representation(instance)
-        ret.pop('category', None)
-        return ret
 
     def validate(self, data):
         """
@@ -69,6 +59,15 @@ class TitleSerializer(serializers.ModelSerializer):
             )
         return data
 
+# сериализатор для презентации произведения с объектами категории и жанра
+class TitleDetailSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+
+    class Meta:
+        model = Title
+        fields = ['id', 'name', 'year', 'rating',
+                  'description', 'genre', 'category']
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
@@ -92,12 +91,10 @@ class ReviewSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """Проверяет, добавлял ли автор уже отзыв для данного произведения."""
         request = self.context['request']
-        title = data.get('title')  # Get the title from the request data
-        user = request.user  # The current user (author)
-
-        # Check if the user already reviewed this title (before saving)
+        title = data.get('title') 
+        user = request.user 
         if self.instance is None and Review.objects.filter(author=user, title=title).exists():
-            raise serializers.ValidationError("You have already reviewed this title.")
+            raise serializers.ValidationError("You have already reviewed this title.") # Задублено, нужно проверить, работает ли если убрать из вьюсета
         
         return data
 

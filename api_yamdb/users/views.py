@@ -1,25 +1,17 @@
 import random
 
+from .permissions import IsAdminOrRestricted
+from .serializers import (RegistrationSerializer, CustomTokenObtainSerializer,
+                          UsersMeSerializer, UsersSerializer)
+
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from rest_framework import filters, status, viewsets, permissions
+from rest_framework import filters, status, viewsets
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .permissions_q import IsAdmin
-from .serializers import RegistrationSerializer, UsersMeSerializer, UsersSerializer
-
-
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from .permissions_q import IsAdmin
-from .serializers import CustomTokenObtainSerializer
 
 User = get_user_model()
 
@@ -45,7 +37,6 @@ class AdminPermissionMixin:
     permission_classes = (IsAdmin,)
 
 
-
 class RegistrationAPIView(APIView):
     """
     Вьюсет для регистрации новых пользователей и отправки кода
@@ -53,7 +44,6 @@ class RegistrationAPIView(APIView):
     """
     permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer
-
 
     def post(self, request, *args, **kwargs):
         """
@@ -73,7 +63,6 @@ class RegistrationAPIView(APIView):
                         {"error": "Имя пользователя не соответствует адресу почты."}, 
                         status=status.HTTP_400_BAD_REQUEST
                     )
-
             except User.DoesNotExist:
                 try:
                     user = User.objects.get(username=username)
@@ -106,8 +95,7 @@ class UsersMeAPIView(APIView):
     Методы:
     Вьюсет работает только с методами GET и PATCH.
     """
-    # serializer_class = UsersMeSerializer
-    
+
     def get(self, request):
         user = request.user
         serializer = UsersMeSerializer(user)
@@ -123,15 +111,14 @@ class UsersMeAPIView(APIView):
 
 class UsersViewSet(viewsets.ModelViewSet):
     """
-    Вьюсет администратора, позволяет просматривать список пользователей,
+    Вьюсет просмотра списка пользователей администраторами.
+    Позволяет админу просматривать список пользователей, 
     добавлять новых, удалять старых и менять информацию.
-    Методы:
-        Вьюсет работает только с методами GET и PATCH.
     """
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
-    serializer_class = UsersSerializer  # Может не подойти
+    serializer_class = UsersSerializer
     permission_classes = (IsAdmin,)
-    filter_backends = (filters.SearchFilter, )
+    filter_backends = (filters.SearchFilter,)
     lookup_field = 'username'
     search_fields = ('username',)

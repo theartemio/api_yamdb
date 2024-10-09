@@ -1,12 +1,8 @@
-import random
 import re
 
-from django.contrib.auth import authenticate, get_user_model
-from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
 from django.http import Http404
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import User
 
@@ -42,21 +38,19 @@ class CustomTokenObtainSerializer(serializers.Serializer):
     def validate(self, data):
         username = data.get('username')
         confirmation_code = data.get('confirmation_code')
-        
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             raise Http404
 
         if user.confirmation_code != confirmation_code:
-            raise serializers.ValidationError('Invalid username or confirmation code.')
+            raise serializers.ValidationError('Неверный код или юзернейм.')
 
         return {'user': user}
 
 
 class UsersMeSerializer(serializers.ModelSerializer):
 
-    # email = serializers.EmailField(max_length=254, required=False)
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
     role = serializers.CharField(max_length=16, read_only=True)
@@ -73,16 +67,12 @@ class UsersMeSerializer(serializers.ModelSerializer):
     
 
 class UsersSerializer(serializers.ModelSerializer):
-
-    # email = serializers.EmailField(max_length=254, required=False)
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
-    # role = serializers.CharField(max_length=16, read_only=True)
 
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
-
 
     def validate_username(self, value):
         pattern = r'^[\w.@+-]+\Z'

@@ -1,20 +1,19 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets, permissions
+from rest_framework import filters, viewsets
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
 from rest_framework import serializers
-
-from api.permissions import IsAuthOrReadOnly
-from api.serializers import CommentSerializer, ReviewSerializer
-from reviews.models import Category, Comment, Genre, Review, Title
-from users.permissions import IsAdminOrReadonly
-
-from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
-from django.db import IntegrityError
-from rest_framework import status
 from rest_framework import response
 
+from api.serializers import CommentSerializer, ReviewSerializer
+from reviews.models import Category, Comment, Genre, Review, Title
+from users.permissions import IsAdminOrReadonly, IsAuthOrReadOnly
+
+from .serializers import CategorySerializer, GenreSerializer, TitleSerializer, TitleDetailSerializer
+
+from rest_framework import status
+from rest_framework import response
 
 
 class SearchMixin:
@@ -39,7 +38,7 @@ class GetPostMixin:
 
 
 class AuthorPermissionMixin:
-    """Миксин для проверки авторства и аутентификации."""
+    """Миксин для проверки доступа автора и модера."""
     permission_classes = (IsAuthOrReadOnly,)
 
 
@@ -48,11 +47,9 @@ class AdminOrReadOnlyMixin:
     permission_classes = (IsAdminOrReadonly, )
 
 
-class AuthorMixin:
-    """Миксин для проверки авторства."""
-    permission_classes = [IsAuthenticatedOrReadOnly,]
-
-
+# Вьюсет, который не выдает ошибок KeyError: 'year'
+# но выдает ошибки с категорией
+'''
 class TitleViewSet(AdminOrReadOnlyMixin,
                    PaginationMixin, viewsets.ModelViewSet):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
@@ -62,7 +59,38 @@ class TitleViewSet(AdminOrReadOnlyMixin,
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category', 'genre', 'name', 'year')
     http_method_names = ['get', 'post', 'patch', 'delete']
-    
+'''
+
+# Вьюсет, который выдает ошибки KeyError, но вроде как пофиксена категория
+class TitleViewSet(AdminOrReadOnlyMixin, PaginationMixin, viewsets.ModelViewSet):
+    """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
+
+    queryset = Title.objects.all()
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('category', 'genre', 'name', 'year')
+
+    def list(self, request, *args, **kwargs):
+        """Выдача объектов списом по нужной форме."""
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = TitleDetailSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = TitleDetailSerializer(queryset, many=True)
+        return response.Response(serializer.data)
+
+    def get_serializer_class(self):
+        """Выбор сериализатора в зависимости от действия."""
+        return TitleDetailSerializer if self.action in ['retrieve', 'list'] else TitleSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Создает произведение и возвращает детализацию."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        title = serializer.save()
+        return response.Response(TitleDetailSerializer(title).data, status=201)
 
 
 class CategoryViewSet(AdminOrReadOnlyMixin,
@@ -94,6 +122,7 @@ class GenreViewSet(AdminOrReadOnlyMixin,
     def retrieve(self, request, *args, **kwargs):
         return response.Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
     """
     ViewSet для работы с отзывами.
@@ -118,9 +147,9 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
         """Создает рецензию, указывая произведение с id, переданным в URL."""
         title_id = self.get_post_id()
         title = get_object_or_404(Title, pk=title_id)
-        
+    
         if Review.objects.filter(author=self.request.user, title=title).exists():
-            raise serializers.ValidationError({"detail": "You have already reviewed this title."})
+            raise serializers.ValidationError({"detail": "У вас уже была рецензия на это произведение. Вы можете удалить ее и написать новую или внести изменения."})
 
         serializer.save(author=self.request.user, title=title)
         self.recalculate_rating(title)
