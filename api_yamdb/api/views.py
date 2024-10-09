@@ -13,22 +13,8 @@ from users.permissions import IsAdminOrReadonly
 from .serializers import CategorySerializer, GenreSerializer, TitleSerializer
 from django.db import IntegrityError
 from rest_framework import status
-from rest_framework.response import Response
+from rest_framework import response
 
-class IsModerator(permissions.BasePermission):
-    """
-    Пермишен для модератора.
-    """
-    def has_permission(self, request, view):
-        if bool(request.user and request.user.is_authenticated):
-            if request.user.is_superuser:
-                return True
-            if request.user.role == 'moderator':
-                return True
-            return False
-    def has_object_permission(self, request, view, obj):
-        return True
-        # return request.user.role == 'admin'
 
 
 class SearchMixin:
