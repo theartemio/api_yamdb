@@ -40,7 +40,6 @@ class Title(models.Model):
         переданных списком.
     """
 
-
     name = models.CharField(max_length=256)
     year = models.PositiveSmallIntegerField()
     description = models.TextField(blank=True, null=True)
