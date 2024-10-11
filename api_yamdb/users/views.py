@@ -33,14 +33,14 @@ class CustomTokenObtainView(APIView):
 
 
 class AdminPermissionMixin:
-    """Миксин для проверки авторства и аутентификации."""
+    """Миксин для проверки администраторов и суперпользователей."""
     permission_classes = (IsAdminOrRestricted,)
 
 
 class RegistrationAPIView(APIView):
     """
     Вьюсет для регистрации новых пользователей и отправки кода
-    новым и старым пользователям.
+    подтверждения новым и старым пользователям.
     """
     permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer

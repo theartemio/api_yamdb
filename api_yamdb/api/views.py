@@ -102,14 +102,6 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    def recalculate_rating(self, title):
-        reviews = title.reviews.all()
-        if reviews.exists():
-            title.rating = sum([review.score for review in reviews]) / reviews.count()
-        else:
-            title.rating = None
-        title.save()
-
     def get_post_id(self):
         """Возвращает id произведения."""
         return self.kwargs.get("title_id")
@@ -123,17 +115,6 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
             raise serializers.ValidationError({"detail": "У вас уже была рецензия на это произведение. Вы можете удалить ее и написать новую или внести изменения."})
 
         serializer.save(author=self.request.user, title=title)
-        self.recalculate_rating(title)
-
-    def perform_update(self, serializer):
-        title = serializer.instance.title
-        serializer.save()
-        self.recalculate_rating(title)
-
-    def perform_destroy(self, instance):
-        title = instance.title
-        instance.delete()
-        self.recalculate_rating(title)
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
