@@ -1,22 +1,14 @@
+from api.serializers import CommentSerializer, ReviewSerializer
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
+from rest_framework import filters, response, serializers, status, viewsets
 from rest_framework.pagination import LimitOffsetPagination
-
-from rest_framework import serializers
-from rest_framework import response
-
-from api.serializers import CommentSerializer, ReviewSerializer
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.permissions import IsAdminOrReadonly, IsAuthOrReadOnly
 
-from .serializers import (CategorySerializer,
-                          GenreSerializer,
-                          TitleSerializer,
-                          TitleDetailSerializer)
-
-from rest_framework import status
-from rest_framework import response
+from .filtersets import TitleFilter
+from .serializers import (CategorySerializer, GenreSerializer,
+                          TitleDetailSerializer, TitleSerializer)
 
 
 class PaginationMixin:
@@ -49,14 +41,15 @@ class SearchAndFilterMixin:
     search_fields = ('name',)
 
 
-class TitleViewSet(AdminOrReadOnlyMixin, PaginationMixin, viewsets.ModelViewSet):
+class TitleViewSet(AdminOrReadOnlyMixin,
+                   PaginationMixin,
+                   viewsets.ModelViewSet):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
 
     queryset = Title.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('year', 'genre__slug', 'category__slug', 'name')
-    #filterset_fields = ('year', 'genre', 'category', 'name')
+    filterset_class = TitleFilter
 
     def list(self, request, *args, **kwargs):
         """Выдача объектов списом по нужной форме."""

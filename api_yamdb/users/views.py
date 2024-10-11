@@ -1,17 +1,16 @@
 import random
 
-from .permissions import IsAdminOrRestricted
-from .serializers import (RegistrationSerializer, CustomTokenObtainSerializer,
-                          UsersMeSerializer, UsersSerializer)
-
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from rest_framework import filters, status, viewsets
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import status
-from rest_framework.response import Response
+
+from .permissions import IsAdminOrRestricted
+from .serializers import (CustomTokenObtainSerializer, RegistrationSerializer,
+                          UsersMeSerializer, UsersSerializer)
 
 User = get_user_model()
 

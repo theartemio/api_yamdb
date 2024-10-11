@@ -3,7 +3,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from .constants import APPS_AND_MODELS, APPS, PATH
+from .constants import APPS, APPS_AND_MODELS, PATH
 from .utils import get_data_directory, get_file_names, upload_csv_data
 
 

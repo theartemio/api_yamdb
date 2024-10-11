@@ -51,7 +51,7 @@ class Title(models.Model):
     rating = models.PositiveSmallIntegerField(null=True)
 
     def __str__(self):
-        return self.name
+        return f'{self.name} {self.genre} {self.category}'
 
 
 class Review(models.Model):
