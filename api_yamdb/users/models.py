@@ -15,7 +15,7 @@ CHOICES = (
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, username, email, role='user', bio=None, password=None):
+    def create_user(self, username, email, role='user', bio='', password=None):
         if username is None:
             raise TypeError('Users must have a username.')
         if email is None:
