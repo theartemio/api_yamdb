@@ -1,10 +1,4 @@
-from datetime import datetime, timedelta
-
-import jwt
-from django.conf import settings
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import (AbstractBaseUser, AbstractUser,
-                                        BaseUserManager, PermissionsMixin)
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
 CHOICES = (
@@ -12,6 +6,7 @@ CHOICES = (
     ("moderator", "moderator"),
     ("admin", "admin"),
 )
+
 
 class UserManager(BaseUserManager):
 
@@ -29,7 +24,7 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(self, username, email, 
+    def create_superuser(self, username, email,
                          role='admin', bio='', password=None):
         user = self.create_user(username, email)
         user.is_superuser = True
@@ -51,4 +46,3 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
-

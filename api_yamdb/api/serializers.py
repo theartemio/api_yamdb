@@ -1,5 +1,3 @@
-import datetime as dt
-
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 
@@ -46,7 +44,6 @@ class TitleSerializer(serializers.ModelSerializer):
                   )
 
 
-# сериализатор для презентации произведения с объектами категории и жанра
 class TitleDetailSerializer(serializers.ModelSerializer):
     """Сериализатор для детального просмотра произведений."""
 
@@ -58,14 +55,15 @@ class TitleDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'year', 'rating',
                   'description', 'genre', 'category']
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Review (Отзыв).
     """
     title = serializers.PrimaryKeyRelatedField(queryset=Title.objects.all(),
                                                required=False)
-    author = serializers.SlugRelatedField(slug_field="username", read_only=True)
-
+    author = serializers.SlugRelatedField(slug_field="username",
+                                          read_only=True)
 
     class Meta:
         model = Review
@@ -76,16 +74,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation.pop('title', None)
         return representation
-
-    def validate(self, data):
-        """Проверяет, добавлял ли автор уже отзыв для данного произведения."""
-        request = self.context['request']
-        title = data.get('title') 
-        user = request.user 
-        if self.instance is None and Review.objects.filter(author=user, title=title).exists():
-            raise serializers.ValidationError("You have already reviewed this title.") # Задублено, нужно проверить, работает ли если убрать из вьюсета
-        
-        return data
 
     def validate_score(self, value):
         """
@@ -104,7 +92,8 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     review = serializers.PrimaryKeyRelatedField(queryset=Review.objects.all(),
                                                 required=False)
-    author = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    author = serializers.SlugRelatedField(slug_field="username",
+                                          read_only=True)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

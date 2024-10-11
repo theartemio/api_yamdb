@@ -7,7 +7,7 @@ class TitleFilter(filters.FilterSet):
     Фильтр для модели Title, позволяющий фильтровать
     по жанру, категории, году и имени
     """
-    genre = filters.CharFilter(field_name='genre__slug', 
+    genre = filters.CharFilter(field_name='genre__slug',
                                lookup_expr='exact')
     category = filters.CharFilter(field_name='category__slug',
                                   lookup_expr='exact')

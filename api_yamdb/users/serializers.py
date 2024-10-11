@@ -26,14 +26,16 @@ class RegistrationSerializer(serializers.ModelSerializer):
         """
         pattern = r'^[\w.@+-]+\Z'
         if value == 'me' or not re.fullmatch(pattern, value):
-            raise serializers.ValidationError("Такое имя пользователя недопустимо!")
+            error_message = "Такое имя пользователя недопустимо!"
+            raise serializers.ValidationError(error_message)
         return value
 
 
 class CustomTokenObtainSerializer(serializers.Serializer):
     """Кастомный сериализатор для получения токена."""
     username = serializers.CharField(write_only=True, required=True)
-    confirmation_code = serializers.IntegerField(write_only=True, required=True)
+    confirmation_code = serializers.IntegerField(write_only=True,
+                                                 required=True)
 
     def validate(self, data):
         username = data.get('username')
@@ -57,14 +59,19 @@ class UsersMeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+        fields = ['username',
+                  'email',
+                  'first_name',
+                  'last_name',
+                  'bio',
+                  'role']
 
     def validate_username(self, value):
         pattern = r'^[\w.@+-]+\Z'
         if re.fullmatch(pattern, value) and value != 'me':
             return value
         raise serializers.ValidationError()
-    
+
 
 class UsersSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=150, required=False)
@@ -72,7 +79,12 @@ class UsersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'role', 'first_name', 'last_name', 'bio']
+        fields = ['username',
+                  'email',
+                  'role',
+                  'first_name',
+                  'last_name',
+                  'bio']
 
     def validate_username(self, value):
         pattern = r'^[\w.@+-]+\Z'

@@ -64,7 +64,9 @@ class TitleViewSet(AdminOrReadOnlyMixin,
 
     def get_serializer_class(self):
         """Выбор сериализатора в зависимости от действия."""
-        return TitleDetailSerializer if self.action in ['retrieve'] else TitleSerializer
+        return (TitleDetailSerializer
+                if self.action in ['retrieve']
+                else TitleSerializer)
 
     def create(self, request, *args, **kwargs):
         """Создает произведение и возвращает детализацию."""
@@ -110,9 +112,13 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
         """Создает рецензию, указывая произведение с id, переданным в URL."""
         title_id = self.get_post_id()
         title = get_object_or_404(Title, pk=title_id)
-    
-        if Review.objects.filter(author=self.request.user, title=title).exists():
-            raise serializers.ValidationError({"detail": "У вас уже была рецензия на это произведение. Вы можете удалить ее и написать новую или внести изменения."})
+
+        if Review.objects.filter(author=self.request.user,
+                                 title=title).exists():
+            error_message = ("""У вас уже была рецензия на это произведение.
+                             Вы можете удалить ее и написать новую или
+                             внести изменения.""")
+            raise serializers.ValidationError({"detail": error_message})
 
         serializer.save(author=self.request.user, title=title)
 

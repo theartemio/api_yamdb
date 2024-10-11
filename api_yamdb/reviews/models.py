@@ -36,9 +36,6 @@ class Title(models.Model):
         у одного произведения допускается несколько жанров,
         переданных списком.
     """
-
-
-
     name = models.CharField(max_length=256)
     year = models.PositiveSmallIntegerField()
     description = models.TextField(blank=True, null=True)
@@ -55,7 +52,8 @@ class Title(models.Model):
     def recalculate_rating(self):
         reviews = self.reviews.all()
         if reviews.exists():
-            self.rating = sum([review.score for review in reviews]) / reviews.count()
+            self.rating = (sum([review.score for review in reviews])
+                           / reviews.count())
         else:
             self.rating = None
         self.save()
@@ -82,22 +80,18 @@ class Review(models.Model):
                                related_name="reviews")
     pub_date = models.DateTimeField(auto_now_add=True)
 
-
     def save(self, *args, **kwargs):
-        # Проверяем, изменилось ли значение score
         old_score = None
         if self.pk:
-            old_score = Review.objects.filter(pk=self.pk).values_list('score', flat=True).first()
-
+            old_score = (Review.objects.
+                         filter(pk=self.pk).
+                         values_list('score', flat=True).first())
         super().save(*args, **kwargs)
-
         if old_score != self.score:
-            # Пересчитываем рейтинг только если score изменился
             self.title.recalculate_rating()
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        # Пересчитываем рейтинг после удаления отзыва
         self.title.recalculate_rating()
 
     class Meta:

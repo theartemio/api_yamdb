@@ -61,16 +61,20 @@ class RegistrationAPIView(APIView):
             try:
                 user = User.objects.get(email=email)
                 if user.username != username:
+                    error_message = """Имя пользователя не
+                    соответствует адресу почты."""
                     return Response(
-                        {"error": "Имя пользователя не соответствует адресу почты."}, 
+                        {"error": error_message},
                         status=status.HTTP_400_BAD_REQUEST
                     )
             except User.DoesNotExist:
                 try:
                     user = User.objects.get(username=username)
                     if user.email != email:
+                        error_message = """Почта не соответствует
+                        имени пользователя."""
                         return Response(
-                            {"error": "Почта не соответствует имени пользователя."},
+                            {"error": error_message},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                 except User.DoesNotExist:
@@ -111,10 +115,11 @@ class UsersMeAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UsersViewSet(AdminPermissionMixin, viewsets.ModelViewSet):
     """
     Вьюсет просмотра списка пользователей администраторами.
-    Позволяет админу просматривать список пользователей, 
+    Позволяет админу просматривать список пользователей,
     добавлять новых, удалять старых и менять информацию.
     """
     http_method_names = ['get', 'post', 'patch', 'delete']

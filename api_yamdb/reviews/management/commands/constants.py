@@ -1,9 +1,9 @@
-MTM_MODELS = ['title_genre',]
+MTM_MODELS = ['title_genre', ]
 
 APPS = [
     'users',
     'reviews',
-        ]
+]
 
 PATH = 'static/data'
 
@@ -14,9 +14,9 @@ APPS_AND_MODELS = {
         'title',
         'title_genre',
         'review',
-        'comment', 
+        'comment',
     ],
     'users': [
         'user',
-        ]
+    ]
 }

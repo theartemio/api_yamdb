@@ -21,13 +21,9 @@ router.register(
     basename='comments',
 )
 
-
-
 urlpatterns = [
     path("v1/", include(router.urls)),
-    path("v1/", include('users.urls')),]
-
-
+    path("v1/", include('users.urls')), ]
 
 if settings.DEBUG:
     urlpatterns += static(
@@ -36,4 +32,3 @@ if settings.DEBUG:
     urlpatterns += static(
         settings.STATIC_URL, document_root=settings.STATIC_ROOT
     )
-

@@ -25,6 +25,7 @@ class IsAuthOrReadOnly(permissions.BasePermission):
             or request.user.is_superuser
         )
 
+
 class IsAdminOrRestricted(permissions.BasePermission):
     """
     Пермишен для админа, обеспечивает доступ только админу.
@@ -36,6 +37,7 @@ class IsAdminOrRestricted(permissions.BasePermission):
             if request.user.role == 'admin':
                 return True
             return False
+
     def has_object_permission(self, request, view, obj):
         return True
 
@@ -44,11 +46,11 @@ class IsAdminOrReadonly(permissions.BasePermission):
     """
     Пермишен для админа, обеспечивает доступ для
     изменения только админу, остальным ролям и анонимным
-    пользователям - 
+    пользователям -
     """
     def has_permission(self, request, view):
         return (
-            request.method in permissions.SAFE_METHODS 
+            request.method in permissions.SAFE_METHODS
             or request.user.is_authenticated and request.user.role == 'admin'
             or request.user.is_authenticated and request.user.is_superuser
         )
