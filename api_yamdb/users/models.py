@@ -29,7 +29,8 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(self, username, email, role='admin', bio=None, password=None):
+    def create_superuser(self, username, email, 
+                         role='admin', bio='', password=None):
         user = self.create_user(username, email)
         user.is_superuser = True
         user.is_staff = True
@@ -45,7 +46,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150,)
     last_name = models.CharField(max_length=150,)
     role = models.CharField(max_length=16, choices=CHOICES, default='user')
-    bio = models.TextField(blank=True, null=True)
+    bio = models.TextField(blank=True,)
     objects = UserManager()
 
     def __str__(self):

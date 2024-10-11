@@ -10,31 +10,18 @@ from api.serializers import CommentSerializer, ReviewSerializer
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.permissions import IsAdminOrReadonly, IsAuthOrReadOnly
 
-from .serializers import CategorySerializer, GenreSerializer, TitleSerializer, TitleDetailSerializer
+from .serializers import (CategorySerializer,
+                          GenreSerializer,
+                          TitleSerializer,
+                          TitleDetailSerializer)
 
 from rest_framework import status
 from rest_framework import response
 
 
-class SearchMixin:
-    """Миксин для поиска по названию."""
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
-
-
 class PaginationMixin:
     """Миксин для настройки пагинации."""
     pagination_class = LimitOffsetPagination
-
-
-class SlugLookupMixin:
-    """Миксин для доступа по URL со слагом."""
-    lookup_field = 'slug'
-
-
-class GetPostMixin:
-    """Миксин для ограничения методов."""
-    http_method_names = ['get', 'post', 'delete']
 
 
 class AuthorPermissionMixin:
@@ -47,37 +34,37 @@ class AdminOrReadOnlyMixin:
     permission_classes = (IsAdminOrReadonly, )
 
 
-# Вьюсет, который не выдает ошибок KeyError: 'year'
-# но выдает ошибки с категорией
-'''
-class TitleViewSet(AdminOrReadOnlyMixin,
-                   PaginationMixin, viewsets.ModelViewSet):
-    """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
-    # queryset = Title.objects.select_related('category').all()
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
-    http_method_names = ['get', 'post', 'patch', 'delete']
-'''
+class GetPostMixin:
+    """Миксин для ограничения методов."""
+    http_method_names = ['get', 'post', 'delete']
 
-# Вьюсет, который выдает ошибки KeyError, но вроде как пофиксена категория
+    def retrieve(self, request, *args, **kwargs):
+        return response.Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class SearchAndFilterMixin:
+    """Миксин для поиска по имени и фильтрации по слагу."""
+    lookup_field = 'slug'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+
 class TitleViewSet(AdminOrReadOnlyMixin, PaginationMixin, viewsets.ModelViewSet):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
 
     queryset = Title.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
+    filterset_fields = ('year', 'genre__slug', 'category__slug', 'name')
 
     def list(self, request, *args, **kwargs):
         """Выдача объектов списом по нужной форме."""
         queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = TitleDetailSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-
         serializer = TitleDetailSerializer(queryset, many=True)
         return response.Response(serializer.data)
 
@@ -94,33 +81,23 @@ class TitleViewSet(AdminOrReadOnlyMixin, PaginationMixin, viewsets.ModelViewSet)
 
 
 class CategoryViewSet(AdminOrReadOnlyMixin,
-                      SearchMixin,
+                      SearchAndFilterMixin,
                       PaginationMixin,
                       GetPostMixin,
-                      SlugLookupMixin,
                       viewsets.ModelViewSet):
     """Возвращает список категорий и позволяет их добавлять и редактировать."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    lookup_field = 'slug'
-
-    def retrieve(self, request, *args, **kwargs):
-        return response.Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class GenreViewSet(AdminOrReadOnlyMixin,
-                   SearchMixin,
+                   SearchAndFilterMixin,
                    PaginationMixin,
                    GetPostMixin,
-                   SlugLookupMixin,
                    viewsets.ModelViewSet):
     """Возвращает список жанров и позволяет их добавлять и редактировать."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    lookup_field = 'slug'
-
-    def retrieve(self, request, *args, **kwargs):
-        return response.Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):

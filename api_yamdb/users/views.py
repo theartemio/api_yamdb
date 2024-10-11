@@ -15,6 +15,7 @@ from rest_framework.response import Response
 
 User = get_user_model()
 
+
 class CustomTokenObtainView(APIView):
     """
     Вьюсет для получения токена.
@@ -48,31 +49,28 @@ class RegistrationAPIView(APIView):
     def post(self, request, *args, **kwargs):
         """
         Логика процесса регистрации:
-        - Если существует пользователь с парой адрес электронной почты+имя пользователя, то код отправляется повторно.
-        – Если передается неполная информация (имя пользователя или почта не совпадают с базой), возвраается ответ с кодом 400.
+        - Если существует пользователь с парой
+        адрес электронной почты+имя пользователя, то код отправляется повторно.
+        – Если передается неполная информация (имя пользователя или почта
+        не совпадают с базой), возвращается ответ с кодом 400.
         - Если такого пользователя не существует, пользователь создается.
         """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             username = serializer.validated_data.get('username')
             email = serializer.validated_data.get('email')
-            try:
-                user = User.objects.get(email=email)
-                if user.username != username:
-                    return Response(
-                        {"error": "Имя пользователя не соответствует адресу почты."}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            except User.DoesNotExist:
-                try:
-                    user = User.objects.get(username=username)
-                    if user.email != email:
-                        return Response(
-                            {"error": "Почта не соответствует имени пользователя."},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                except User.DoesNotExist:
-                    user = User.objects.create(username=username, email=email)
+            errors = {}
+            email_user = User.objects.filter(email=email).first()
+            if email_user:
+
+                if email_user.username != username:
+                    errors['email'] = [f"Почта уже зарегистрирована с другим юзернеймом."]
+            username_user = User.objects.filter(username=username).first()
+            if username_user:
+                errors['username'] = [f"Такое имя уже занято."]
+            if errors:
+                return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+            user = User.objects.create(username=username, email=email)
             confirmation_code = random.randint(1000, 9999)
             user.confirmation_code = confirmation_code
             user.save()

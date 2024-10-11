@@ -20,21 +20,21 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ("name", "slug",)
         model = Category
 
-# Основной сериализатор тайтлов,
-# Нужен для списка.
+
 class TitleSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели Title."""
+    """Сериализатор для модели Title при просмотре списком."""
 
     category = serializers.SlugRelatedField(queryset=Category.objects.all(),
                                             required=True,
                                             slug_field="slug",
-                                            write_only=True)
+                                            )
     genre = serializers.SlugRelatedField(queryset=Genre.objects.all(),
                                          slug_field="slug",
                                          many=True,
-                                         required=False,
+                                         required=True,
                                          allow_null=True,
                                          )
+
     class Meta:
         model = Title
         fields = ("id",
@@ -49,6 +49,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
 # сериализатор для презентации произведения с объектами категории и жанра
 class TitleDetailSerializer(serializers.ModelSerializer):
+    """Сериализатор для детального просмотра произведений."""
 
     genre = GenreSerializer(many=True)
     category = CategorySerializer()

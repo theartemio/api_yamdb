@@ -1,8 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 
 User = get_user_model()
 
@@ -14,7 +12,6 @@ class NameSlugMixin(models.Model):
 
     class Meta:
         abstract = True
-
 
     def __str__(self):
         return self.name
@@ -47,7 +44,7 @@ class Title(models.Model):
                                    related_name='genres')
     category = models.ForeignKey(Category,
                                  on_delete=models.SET_NULL,
-                                 related_name="titles",
+                                 related_name="categories",
                                  null=True,
                                  blank=False
                                  )
