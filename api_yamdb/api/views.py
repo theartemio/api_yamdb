@@ -56,6 +56,7 @@ class TitleViewSet(AdminOrReadOnlyMixin, PaginationMixin, viewsets.ModelViewSet)
     http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('year', 'genre__slug', 'category__slug', 'name')
+    #filterset_fields = ('year', 'genre', 'category', 'name')
 
     def list(self, request, *args, **kwargs):
         """Выдача объектов списом по нужной форме."""

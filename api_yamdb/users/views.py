@@ -60,16 +60,16 @@ class RegistrationAPIView(APIView):
             username = serializer.validated_data.get('username')
             email = serializer.validated_data.get('email')
             errors = {}
-            email_user = User.objects.filter(email=email).first()
-            if email_user:
-
-                if email_user.username != username:
-                    errors['email'] = [f"Почта уже зарегистрирована с другим юзернеймом."]
+            email_user = User.objects.get(email=email)
             username_user = User.objects.filter(username=username).first()
-            if username_user:
+            if email_user.username != username:
+                errors['email'] = [f"Почта уже зарегистрирована с другим юзернеймом."]
+            if username_user != email_user:
                 errors['username'] = [f"Такое имя уже занято."]
             if errors:
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+
             user = User.objects.create(username=username, email=email)
             confirmation_code = random.randint(1000, 9999)
             user.confirmation_code = confirmation_code
