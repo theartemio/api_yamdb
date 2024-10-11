@@ -1,43 +1,97 @@
-### Как запустить проект:
+# api_yatube
 
-Клонировать репозиторий и перейти в него в командной строке:
+Проект реализует полноценный API для проекта YAMDB.
 
-```
-git clone https://github.com/VladSmyslov/api_final_yatube.git
-```
+Для полного доступа к API с возможностьюу добавлять посты и комментарии,
+редактировать свои посты и комментарии, а также подписываться
+на других пользователей необходимо получить JWT-токен.
 
-```
-cd api_final_yatube
-```
+## Установка и настройка
 
-Cоздать и активировать виртуальное окружение:
+1. Клонируйте репозиторий:
 
-```
-python3 -m venv env
+```bash
+git clone git@github.com:theartemio/api_yamdb.git
 ```
 
-```
-source env/bin/activate
+2. Создайте и активируйте виртуальное окружение:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-Установить зависимости из файла requirements.txt:
+3. Установите необходимые зависимости:
 
-```
-python3 -m pip install --upgrade pip
-```
-
-```
+```bash
 pip install -r requirements.txt
 ```
 
-Выполнить миграции:
+4. Выполните миграции:
 
-```
-python3 manage.py migrate
+```bash
+python manage.py migrate
 ```
 
-Запустить проект:
+## Использование
 
+### Регистрация пользователя
+
+POST api/v1/auth/signup/ — передайте эмейл и юзернейм, чтобы зарегистрироваться.
+Пример запроса:
+
+```json
+{
+  "email": "user@example.com",
+  "username": "string",
+}
 ```
-python3 manage.py runserver
+
+### Аутентификация и получение JWT-токена
+
+POST api/v1/auth/token/ — передайте юзернейм и полученный код подтверждения, чтобы получить токен.
+Пример запроса:
+
+```json
+{
+    "username": "User",
+    "confirmation_code": 0000
+}
 ```
+
+### Основные эндпоинты
+
+- POST /api/v1/auth/signup/ — зарегистрироваться.
+- POST /api/v1/auth/token/ — получить и обновить JWT-токен.
+- GET /api/v1/titles/ — просмотреть базу данных произведений. Доступны фильтры.
+- GET /api/v1/categories/ — просмотреть категории.
+- GET /api/v1/genres/ — просмотреть жанры.
+- GET /api/v1/titles/pk/reviews/ — просмотреть рецензии на произведение.
+- POST /api/v1/titles/pk/reviews/ — добавить свою рецензию на произведение.
+- GET /api/v1/reviews/{post_id}/comments/ — получить комментарии к рецензии.
+- POST /api/v1/reviews/{post_id}/comments/ — добавить новый комментарий.
+- GET /api/v1/reviews/{post_id}/comments/{comment_id}/ — получить информацию о комментарии.
+- PUT /api/v1/reviews/{post_id}/comments/{comment_id}/ — обновить комментарий.
+- DELETE /api/v1/reviews/{post_id}/comments/{comment_id}/ — удалить комментарий.
+- GET /api/v1/users/me/ — информация о своем аккаунте.
+
+Более подробное описание находится по адресу http://127.0.0.1:8000/redoc.
+
+
+## Требования
+- Python 3.8+
+- Django 3.2+
+- Djangorestframework 3.12+
+
+## Авторы
+
+**Основной функционал проекта**
+Артемий Третьяков [GitHub](https://github.com/theartemio)
+Владислав Смыслов [GitHub](https://github.com/VladSmyslov)
+Абдул Малик [GitHub](https://github.com/Abdul-Malik-2005/)
+
+**Исходный репозиторий**
+Яндекс.Практикум [GitHub](https://github.com/yandex-praktikum/).
+
+## Лицензия
+Этот проект распространяется на условиях лицензии MIT.
