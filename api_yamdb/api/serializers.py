@@ -24,7 +24,7 @@ class CategorySerializer(serializers.ModelSerializer):
 # Нужен для списка.
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Title."""
-    
+
     category = serializers.SlugRelatedField(queryset=Category.objects.all(),
                                             required=True,
                                             slug_field="slug",
@@ -36,6 +36,7 @@ class TitleSerializer(serializers.ModelSerializer):
                                          allow_null=True,
                                          )
     class Meta:
+        model = Title
         fields = ("id",
                   "name",
                   "year",
@@ -44,23 +45,11 @@ class TitleSerializer(serializers.ModelSerializer):
                   "genre",
                   "category",
                   )
-        model = Title
 
-    def validate(self, data):
-        """
-        Проверяет что год выпуска произведения уже наступил
-        (что произведение уже вышло)
-        """
-        year = data["year"]
-        current_year = dt.date.today().year
-        if year > current_year:
-            raise serializers.ValidationError(
-                "Произведение еще не вышло!"
-            )
-        return data
 
 # сериализатор для презентации произведения с объектами категории и жанра
 class TitleDetailSerializer(serializers.ModelSerializer):
+
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
 

@@ -83,7 +83,7 @@ class TitleViewSet(AdminOrReadOnlyMixin, PaginationMixin, viewsets.ModelViewSet)
 
     def get_serializer_class(self):
         """Выбор сериализатора в зависимости от действия."""
-        return TitleDetailSerializer if self.action in ['retrieve', 'list'] else TitleSerializer
+        return TitleDetailSerializer if self.action in ['retrieve'] else TitleSerializer
 
     def create(self, request, *args, **kwargs):
         """Создает произведение и возвращает детализацию."""
