@@ -1,6 +1,6 @@
 import random
 
-from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.core.mail import send_mail
 from rest_framework import filters, status, viewsets
 from rest_framework.permissions import AllowAny
@@ -11,8 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .permissions import IsAdminOrRestricted
 from .serializers import (CustomTokenObtainSerializer, RegistrationSerializer,
                           UsersMeSerializer, UsersSerializer)
-
-User = get_user_model()
+from .models import User
 
 
 class CustomTokenObtainView(APIView):
@@ -45,6 +44,9 @@ class RegistrationAPIView(APIView):
     permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer
 
+    def generate_confirmation_code(self):
+        return random.randint(1000, 9999)
+
     def post(self, request, *args, **kwargs):
         """
         Логика процесса регистрации:
@@ -58,35 +60,22 @@ class RegistrationAPIView(APIView):
         if serializer.is_valid():
             username = serializer.validated_data.get('username')
             email = serializer.validated_data.get('email')
+            confirmation_code = self.generate_confirmation_code()
             try:
-                user = User.objects.get(email=email)
-                if user.username != username:
-                    error_message = """Имя пользователя не
-                    соответствует адресу почты."""
-                    return Response(
-                        {"error": error_message},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            except User.DoesNotExist:
-                try:
-                    user = User.objects.get(username=username)
-                    if user.email != email:
-                        error_message = """Почта не соответствует
-                        имени пользователя."""
-                        return Response(
-                            {"error": error_message},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                except User.DoesNotExist:
-                    user = User.objects.create(username=username, email=email)
-            confirmation_code = random.randint(1000, 9999)
-            user.confirmation_code = confirmation_code
-            user.save()
+                User.objects.get_or_create(
+                    username=username,
+                    email=email,
+                    defaults={
+                        'confirmation_code': confirmation_code})
+            except IntegrityError:
+                return Response(
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             send_mail(
                 subject='Code',
                 message=f'Confirmation code: {confirmation_code}',
                 from_email='api@yamdb.not',
-                recipient_list=[user.email],
+                recipient_list=[email],
                 fail_silently=True,
             )
             return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,15 +1,29 @@
 import re
 
-from django.contrib.auth import get_user_model
 from django.http import Http404
 from rest_framework import serializers
 
 from .models import User
 
-User = get_user_model()
+PATTERN = r'^[\w.@+-]+\Z'
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class ValidateUsernameMixin:
+    """Миксин для валидации поля username."""
+
+    def validate_username(self, value):
+        """
+        Проверяет юзернейм по паттерну, а также не дает использовать
+        юзернейм me.
+        """
+        if value == 'me' or not re.fullmatch(PATTERN, value):
+            error_message = "Такое имя пользователя недопустимо!"
+            raise serializers.ValidationError(error_message)
+        return value
+
+
+class RegistrationSerializer(ValidateUsernameMixin,
+                             serializers.ModelSerializer):
     """Сериализация регистрации юзера."""
 
     email = serializers.EmailField(required=True, max_length=254,)
@@ -18,17 +32,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email', 'username']
-
-    def validate_username(self, value):
-        """
-        Проверяет юзернейм по паттерну, а также не дает использовать
-        юзернейм me.
-        """
-        pattern = r'^[\w.@+-]+\Z'
-        if value == 'me' or not re.fullmatch(pattern, value):
-            error_message = "Такое имя пользователя недопустимо!"
-            raise serializers.ValidationError(error_message)
-        return value
 
 
 class CustomTokenObtainSerializer(serializers.Serializer):
@@ -51,7 +54,7 @@ class CustomTokenObtainSerializer(serializers.Serializer):
         return {'user': user}
 
 
-class UsersMeSerializer(serializers.ModelSerializer):
+class UsersMeSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
 
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
@@ -66,14 +69,8 @@ class UsersMeSerializer(serializers.ModelSerializer):
                   'bio',
                   'role']
 
-    def validate_username(self, value):
-        pattern = r'^[\w.@+-]+\Z'
-        if re.fullmatch(pattern, value) and value != 'me':
-            return value
-        raise serializers.ValidationError()
 
-
-class UsersSerializer(serializers.ModelSerializer):
+class UsersSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
 
@@ -85,12 +82,6 @@ class UsersSerializer(serializers.ModelSerializer):
                   'first_name',
                   'last_name',
                   'bio']
-
-    def validate_username(self, value):
-        pattern = r'^[\w.@+-]+\Z'
-        if re.fullmatch(pattern, value) and value != 'me':
-            return value
-        raise serializers.ValidationError()
 
 
 class LoginSerializer(serializers.Serializer):

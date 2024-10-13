@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
@@ -44,5 +45,16 @@ class User(AbstractUser):
     bio = models.TextField(blank=True,)
     objects = UserManager()
 
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
     def __str__(self):
         return self.email
+
+
+User = get_user_model()
