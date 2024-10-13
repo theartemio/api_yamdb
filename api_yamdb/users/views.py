@@ -68,13 +68,20 @@ class RegistrationAPIView(APIView):
             email = serializer.validated_data.get("email")
             confirmation_code = self.generate_confirmation_code()
             try:
-                User.objects.get_or_create(
-                    username=username,
-                    email=email,
-                    defaults={"confirmation_code": confirmation_code},
+                user, created = User.objects.get_or_create(
+                    username=username, defaults={"email": email}
                 )
             except IntegrityError:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Эмейл занят!"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            if not created and user.email != email:
+                return Response(
+                    {"error": "Эмейл не соответствует имени пользователя!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user.confirmation_code = confirmation_code
+            user.save()
             send_mail(
                 subject="Code",
                 message=f"Confirmation code: {confirmation_code}",
@@ -82,7 +89,9 @@ class RegistrationAPIView(APIView):
                 recipient_list=[email],
                 fail_silently=True,
             )
+
             return Response(serializer.data, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

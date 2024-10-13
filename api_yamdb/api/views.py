@@ -4,7 +4,7 @@ from api.serializers import CommentSerializer, ReviewSerializer
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import response, serializers, viewsets
+from rest_framework import response, viewsets
 from reviews.models import Category, Comment, Genre, Review, Title
 
 from .filtersets import TitleFilter
@@ -105,15 +105,6 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
         """Создает рецензию, указывая произведение с id, переданным в URL."""
         title_id = self.get_post_id()
         title = get_object_or_404(Title, pk=title_id)
-
-        if Review.objects.filter(
-            author=self.request.user, title=title
-        ).exists():
-            error_message = """У вас уже была рецензия на это произведение.
-                             Вы можете удалить ее и написать новую или
-                             внести изменения."""
-            raise serializers.ValidationError({"detail": error_message})
-
         serializer.save(author=self.request.user, title=title)
 
     def get_queryset(self):
