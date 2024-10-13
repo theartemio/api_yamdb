@@ -1,0 +1,3 @@
+MAX_NAME_L = 256
+
+MAX_SLUG_L = 50
