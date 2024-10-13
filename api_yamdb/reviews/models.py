@@ -70,8 +70,10 @@ class Title(models.Model):
         Genre,
         related_name="genres",
         verbose_name="Жанры",
-        help_text=("Жанры, к которым относится произведение.",
-                   " Может быть несколько."),
+        help_text=(
+            "Жанры, к которым относится произведение.",
+            " Может быть несколько.",
+        ),
     )
     category = models.ForeignKey(
         Category,
@@ -81,12 +83,6 @@ class Title(models.Model):
         blank=False,
         verbose_name="Категория",
         help_text="Категория, например 'фильм' или 'музыка'.",
-    )
-    rating = models.PositiveSmallIntegerField(
-        null=True,
-        verbose_name="Рейтинг",
-        help_text=("Средний рейтинг. Считается по",
-                   " всем опубликованным рецензиям."),
     )
 
     def clean(self):
@@ -114,22 +110,6 @@ class Review(models.Model):
         User, on_delete=models.CASCADE, related_name="reviews"
     )
     pub_date = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        old_score = None
-        if self.pk:
-            old_score = (
-                Review.objects.filter(pk=self.pk)
-                .values_list("score", flat=True)
-                .first()
-            )
-        super().save(*args, **kwargs)
-        if old_score != self.score:
-            self.title.recalculate_rating()
-
-    def delete(self, *args, **kwargs):
-        super().delete(*args, **kwargs)
-        self.title.recalculate_rating()
 
     class Meta:
         constraints = [

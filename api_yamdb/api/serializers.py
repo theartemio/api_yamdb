@@ -42,6 +42,7 @@ class TitleSerializer(serializers.ModelSerializer):
         allow_null=False,
         allow_empty=False,
     )
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Title
@@ -61,6 +62,7 @@ class TitleDetailSerializer(serializers.ModelSerializer):
 
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Title

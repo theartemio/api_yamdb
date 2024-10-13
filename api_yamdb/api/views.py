@@ -1,12 +1,10 @@
 from http import HTTPStatus
 
 from api.serializers import CommentSerializer, ReviewSerializer
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import response, serializers, viewsets
-from django.db.models import Avg
-from rest_framework import filters, response, serializers, status, viewsets
-from rest_framework.pagination import LimitOffsetPagination
 from reviews.models import Category, Comment, Genre, Review, Title
 
 from .filtersets import TitleFilter
@@ -34,7 +32,7 @@ class TitleViewSet(
 ):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
 
-    queryset = Title.objects.all().annotate(avg_rating=Avg('reviews__score'))
+    queryset = Title.objects.all().annotate(rating=Avg("reviews__score"))
     http_method_names = (
         "get",
         "post",
