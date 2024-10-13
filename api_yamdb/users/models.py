@@ -1,20 +1,16 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
-CHOICES = (
-    ("user", "user"),
-    ("moderator", "moderator"),
-    ("admin", "admin"),
-)
+from .constants import CHOICES, MAX_EMAIL_L, MAX_ROLE_L, MAX_USER_NAMES_L
 
 
 class UserManager(BaseUserManager):
 
     def create_user(self, username, email, role="user", bio="", password=None):
         if username is None:
-            raise TypeError("Users must have a username.")
+            raise TypeError("Укажите юзернейм.")
         if email is None:
-            raise TypeError("Users must have an email address.")
+            raise TypeError("Укажите эмейл.")
         user = self.model(
             username=username,
             email=self.normalize_email(email),
@@ -36,18 +32,44 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
-    confirmation_code = models.SmallIntegerField(blank=True, null=True)
-    email = models.EmailField(max_length=254, unique=True)
-    username = models.CharField(max_length=150, unique=True)
+    confirmation_code = models.SmallIntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Код подтверждения.",
+        help_text=(
+            "Присылается на почту при регистрации.",
+            " Используется для получения токена.",
+        ),
+    )
+    email = models.EmailField(
+        max_length=MAX_EMAIL_L,
+        unique=True,
+        verbose_name="Эмейл.",
+        help_text=("Эмейл, он должен работать и принимать почту.",),
+    )
+    username = models.CharField(max_length=MAX_USER_NAMES_L, unique=True)
     first_name = models.CharField(
-        max_length=150,
+        max_length=MAX_USER_NAMES_L,
+        verbose_name="Имя.",
+        help_text="Имя, желательно настоящее.",
     )
     last_name = models.CharField(
-        max_length=150,
+        max_length=MAX_USER_NAMES_L,
+        verbose_name="Фамилия.",
+        help_text="Фамилия, тоже желательно настоящая.",
     )
-    role = models.CharField(max_length=16, choices=CHOICES, default="user")
+    role = models.CharField(
+        max_length=MAX_ROLE_L,
+        choices=CHOICES,
+        default="user",
+        verbose_name="Пользовательская роль.",
+        help_text=("Пользователь может быть модератором,",
+                   " админом или обычным юзером."),
+    )
     bio = models.TextField(
         blank=True,
+        verbose_name="Биография.",
+        help_text="Факты, которые пользователь хочет рассказать о себе.",
     )
     objects = UserManager()
 

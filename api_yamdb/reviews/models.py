@@ -100,16 +100,33 @@ class Review(models.Model):
     """
 
     title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, related_name="reviews", null=True
+        Title,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        null=True,
+        verbose_name="Произведение",
+        help_text="Произведение, которое оценивает рецензия.",
     )
-    text = models.TextField()
+    text = models.TextField(
+        verbose_name="Текст рецензии",
+        help_text=("Текст, в котором автор рецензии",
+                   " изложил свои глубокие мысли."),
+    )
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="reviews"
+        User,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        verbose_name="Автор",
+        help_text="Автор рецензии. Присваивается автоматически.",
     )
-    pub_date = models.DateTimeField(auto_now_add=True)
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата публикации",
+        help_text="Присваивается автоматически.",
+    )
 
     class Meta:
         constraints = [
@@ -134,12 +151,22 @@ class Comment(models.Model):
         Review,
         on_delete=models.CASCADE,
         related_name="comments",
+        verbose_name="Рецензия",
+        help_text="Рецензия, к которой относится комментарий.",
     )
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="comments"
+        User,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name="Автор",
+        help_text="Автор коммента. Присваивается автоматически.",
     )
     text = models.TextField()
-    pub_date = models.DateTimeField(auto_now_add=True)
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата публикации.",
+        help_text="Присваивается автоматически.",
+    )
 
     class Meta:
         ordering = ["pub_date"]

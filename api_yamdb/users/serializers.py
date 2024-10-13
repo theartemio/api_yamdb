@@ -1,25 +1,9 @@
-import re
-
 from django.http import Http404
 from rest_framework import serializers
 
+from .constants import MAX_EMAIL_L, MAX_ROLE_L, MAX_USER_NAMES_L
+from .mixins import ValidateUsernameMixin
 from .models import User
-
-PATTERN = r"^[\w.@+-]+\Z"
-
-
-class ValidateUsernameMixin:
-    """Миксин для валидации поля username."""
-
-    def validate_username(self, value):
-        """
-        Проверяет юзернейм по паттерну, а также не дает использовать
-        юзернейм me.
-        """
-        if value == "me" or not re.fullmatch(PATTERN, value):
-            error_message = "Такое имя пользователя недопустимо!"
-            raise serializers.ValidationError(error_message)
-        return value
 
 
 class RegistrationSerializer(
@@ -29,11 +13,11 @@ class RegistrationSerializer(
 
     email = serializers.EmailField(
         required=True,
-        max_length=254,
+        max_length=MAX_EMAIL_L,
     )
     username = serializers.CharField(
         required=True,
-        max_length=150,
+        max_length=MAX_USER_NAMES_L,
     )
 
     class Meta:
@@ -65,9 +49,13 @@ class CustomTokenObtainSerializer(serializers.Serializer):
 
 class UsersMeSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
 
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
-    role = serializers.CharField(max_length=16, read_only=True)
+    first_name = serializers.CharField(
+        max_length=MAX_USER_NAMES_L, required=False
+    )
+    last_name = serializers.CharField(
+        max_length=MAX_USER_NAMES_L, required=False
+    )
+    role = serializers.CharField(max_length=MAX_ROLE_L, read_only=True)
 
     class Meta:
         model = User
@@ -82,8 +70,12 @@ class UsersMeSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
 
 
 class UsersSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
+    first_name = serializers.CharField(
+        max_length=MAX_USER_NAMES_L, required=False
+    )
+    last_name = serializers.CharField(
+        max_length=MAX_USER_NAMES_L, required=False
+    )
 
     class Meta:
         model = User
