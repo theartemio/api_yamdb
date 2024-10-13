@@ -1,14 +1,11 @@
-from django.contrib.auth import get_user_model
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
-from .constants import MAX_SLUG_L, MAX_NAME_L
-
-from rest_framework import serializers
-
 import datetime as dt
 
-User = get_user_model()
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from rest_framework import serializers
 from users.models import User
+
+from .constants import MAX_NAME_L, MAX_SLUG_L
 
 
 class NameSlugMixin(models.Model):

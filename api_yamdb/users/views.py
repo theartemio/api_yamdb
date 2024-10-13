@@ -1,38 +1,43 @@
 import random
 
-from django.db import IntegrityError
 from django.core.mail import send_mail
+from django.db import IntegrityError
 from rest_framework import filters, status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .models import User
 from .permissions import IsAdminOrRestricted
 from .serializers import (CustomTokenObtainSerializer, RegistrationSerializer,
                           UsersMeSerializer, UsersSerializer)
-from .models import User
 
 
 class CustomTokenObtainView(APIView):
     """
     Вьюсет для получения токена.
     """
+
     permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
         serializer = CustomTokenObtainSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        user = serializer.validated_data["user"]
         refresh = RefreshToken.for_user(user)
 
-        return Response({
-            'token': str(refresh.access_token),
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "token": str(refresh.access_token),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminPermissionMixin:
     """Миксин для проверки администраторов и суперпользователей."""
+
     permission_classes = (IsAdminOrRestricted,)
 
 
@@ -41,6 +46,7 @@ class RegistrationAPIView(APIView):
     Вьюсет для регистрации новых пользователей и отправки кода
     подтверждения новым и старым пользователям.
     """
+
     permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer
 
@@ -58,23 +64,21 @@ class RegistrationAPIView(APIView):
         """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            username = serializer.validated_data.get('username')
-            email = serializer.validated_data.get('email')
+            username = serializer.validated_data.get("username")
+            email = serializer.validated_data.get("email")
             confirmation_code = self.generate_confirmation_code()
             try:
                 User.objects.get_or_create(
                     username=username,
                     email=email,
-                    defaults={
-                        'confirmation_code': confirmation_code})
-            except IntegrityError:
-                return Response(
-                    status=status.HTTP_400_BAD_REQUEST
+                    defaults={"confirmation_code": confirmation_code},
                 )
+            except IntegrityError:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             send_mail(
-                subject='Code',
-                message=f'Confirmation code: {confirmation_code}',
-                from_email='api@yamdb.not',
+                subject="Code",
+                message=f"Confirmation code: {confirmation_code}",
+                from_email="api@yamdb.not",
                 recipient_list=[email],
                 fail_silently=True,
             )
@@ -111,9 +115,10 @@ class UsersViewSet(AdminPermissionMixin, viewsets.ModelViewSet):
     Позволяет админу просматривать список пользователей,
     добавлять новых, удалять старых и менять информацию.
     """
-    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    http_method_names = ["get", "post", "patch", "delete"]
     queryset = User.objects.all()
     serializer_class = UsersSerializer
     filter_backends = (filters.SearchFilter,)
-    lookup_field = 'username'
-    search_fields = ('username',)
+    lookup_field = "username"
+    search_fields = ("username",)

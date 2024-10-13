@@ -1,25 +1,16 @@
+from http import HTTPStatus
+
 from api.serializers import CommentSerializer, ReviewSerializer
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import response, serializers, viewsets
-
 from reviews.models import Category, Comment, Genre, Review, Title
-from http import HTTPStatus
 
 from .filtersets import TitleFilter
-from .serializers import (
-    CategorySerializer,
-    GenreSerializer,
-    TitleDetailSerializer,
-    TitleSerializer,
-)
-from .mixins import (
-    PaginationMixin,
-    AuthorPermissionMixin,
-    AdminOrReadOnlyMixin,
-    GetPostMixin,
-    SearchAndFilterMixin,
-)
+from .mixins import (AdminOrReadOnlyMixin, AuthorPermissionMixin, GetPostMixin,
+                     PaginationMixin, SearchAndFilterMixin)
+from .serializers import (CategorySerializer, GenreSerializer,
+                          TitleDetailSerializer, TitleSerializer)
 
 
 class BaseCatGenreViewSet(

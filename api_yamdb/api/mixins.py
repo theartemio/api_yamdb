@@ -1,6 +1,6 @@
-from users.permissions import IsAdminOrReadonly, IsAuthOrReadOnly
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import filters, response, status
+from rest_framework.pagination import LimitOffsetPagination
+from users.permissions import IsAdminOrReadonly, IsAuthOrReadOnly
 
 
 class PaginationMixin:
