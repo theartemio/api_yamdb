@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 
+import datetime as dt
+
 
 class GenreSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Genre."""
@@ -72,6 +74,16 @@ class TitleDetailSerializer(serializers.ModelSerializer):
             "category",
         )
 
+    def validate_year(self, value):
+        """
+        Проверяет что год выпуска произведения уже наступил
+        (что произведение уже вышло)
+        """
+        current_year = dt.date.today().year
+        if value > current_year:
+            raise serializers.ValidationError("Произведение еще не вышло!")
+        return value
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
@@ -81,8 +93,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     title = serializers.PrimaryKeyRelatedField(
         queryset=Title.objects.all(), required=False
     )
-    author = serializers.SlugRelatedField(slug_field="username",
-                                          read_only=True)
+    author = serializers.SlugRelatedField(
+        slug_field="username", read_only=True
+    )
 
     class Meta:
         model = Review
@@ -99,8 +112,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         Проверка того, что оценка находится в диапазоне от 1 до 10.
         """
         if not (1 <= value <= 10):
-            raise serializers.ValidationError("Значение должно",
-                                              "быть от 1 до 10.")
+            raise serializers.ValidationError(
+                "Значение должно", "быть от 1 до 10."
+            )
         return value
 
 
@@ -112,8 +126,9 @@ class CommentSerializer(serializers.ModelSerializer):
     review = serializers.PrimaryKeyRelatedField(
         queryset=Review.objects.all(), required=False
     )
-    author = serializers.SlugRelatedField(slug_field="username",
-                                          read_only=True)
+    author = serializers.SlugRelatedField(
+        slug_field="username", read_only=True
+    )
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

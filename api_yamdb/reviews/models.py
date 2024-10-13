@@ -3,6 +3,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from .constants import MAX_SLUG_L, MAX_NAME_L
 
+from rest_framework import serializers
+
+import datetime as dt
+
 User = get_user_model()
 
 
@@ -96,6 +100,11 @@ class Title(models.Model):
         else:
             self.rating = None
         self.save()
+
+    def clean(self):
+        current_year = dt.date.today().year
+        if self.year > current_year:
+            raise serializers.ValidationError("Произведение еще не вышло!")
 
     def __str__(self):
         return f"{self.name} {self.genre} {self.category}"

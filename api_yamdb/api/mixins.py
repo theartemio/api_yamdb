@@ -2,6 +2,7 @@ from users.permissions import IsAdminOrReadonly, IsAuthOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import filters, response, status
 
+
 class PaginationMixin:
     """Миксин для настройки пагинации."""
     pagination_class = LimitOffsetPagination
