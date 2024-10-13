@@ -34,15 +34,13 @@ class TitleViewSet(
 ):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
 
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(avg_rating=Avg('reviews__score'))
     http_method_names = (
         "get",
         "post",
         "patch",
         "delete",
     )
-    queryset = Title.objects.all().annotate(avg_rating=Avg('reviews__score'))
-    http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 

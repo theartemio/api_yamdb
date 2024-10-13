@@ -89,16 +89,6 @@ class Title(models.Model):
                    " всем опубликованным рецензиям."),
     )
 
-    def recalculate_rating(self):
-        reviews = self.reviews.all()
-        if reviews.exists():
-            self.rating = (
-                sum([review.score for review in reviews]) / reviews.count()
-            )
-        else:
-            self.rating = None
-        self.save()
-
     def clean(self):
         current_year = dt.date.today().year
         if self.year > current_year:
