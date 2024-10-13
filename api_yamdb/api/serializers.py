@@ -31,6 +31,7 @@ class TitleSerializer(serializers.ModelSerializer):
                                          required=True,
                                          allow_null=True,
                                          )
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Title

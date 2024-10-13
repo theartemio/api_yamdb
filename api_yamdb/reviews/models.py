@@ -48,15 +48,6 @@ class Title(models.Model):
                                  )
     rating = models.PositiveSmallIntegerField(null=True)
 
-    def recalculate_rating(self):
-        reviews = self.reviews.all()
-        if reviews.exists():
-            self.rating = (sum([review.score for review in reviews])
-                           / reviews.count())
-        else:
-            self.rating = None
-        self.save()
-
     def __str__(self):
         return f'{self.name} {self.genre} {self.category}'
 
@@ -78,20 +69,6 @@ class Review(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                related_name="reviews")
     pub_date = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        old_score = None
-        if self.pk:
-            old_score = (Review.objects.
-                         filter(pk=self.pk).
-                         values_list('score', flat=True).first())
-        super().save(*args, **kwargs)
-        if old_score != self.score:
-            self.title.recalculate_rating()
-
-    def delete(self, *args, **kwargs):
-        super().delete(*args, **kwargs)
-        self.title.recalculate_rating()
 
     class Meta:
         constraints = [
