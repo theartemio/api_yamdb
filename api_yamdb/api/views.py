@@ -1,53 +1,52 @@
 from api.serializers import CommentSerializer, ReviewSerializer
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, response, serializers, status, viewsets
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework import response, serializers, viewsets
+
 from reviews.models import Category, Comment, Genre, Review, Title
-from users.permissions import IsAdminOrReadonly, IsAuthOrReadOnly
+from http import HTTPStatus
 
 from .filtersets import TitleFilter
-from .serializers import (CategorySerializer, GenreSerializer,
-                          TitleDetailSerializer, TitleSerializer)
+from .serializers import (
+    CategorySerializer,
+    GenreSerializer,
+    TitleDetailSerializer,
+    TitleSerializer,
+)
+from .mixins import (
+    PaginationMixin,
+    AuthorPermissionMixin,
+    AdminOrReadOnlyMixin,
+    GetPostMixin,
+    SearchAndFilterMixin,
+)
 
 
-class PaginationMixin:
-    """Миксин для настройки пагинации."""
-    pagination_class = LimitOffsetPagination
+class BaseCatGenreViewSet(
+    AdminOrReadOnlyMixin,
+    SearchAndFilterMixin,
+    PaginationMixin,
+    GetPostMixin,
+    viewsets.ModelViewSet,
+):
+    """Абстрактный базовый вьюсет для вьюсетов простых моделей."""
+
+    class Meta:
+        abstract = True
 
 
-class AuthorPermissionMixin:
-    """Миксин для проверки доступа автора и модера."""
-    permission_classes = (IsAuthOrReadOnly,)
-
-
-class AdminOrReadOnlyMixin:
-    """Миксин для проверки админства."""
-    permission_classes = (IsAdminOrReadonly, )
-
-
-class GetPostMixin:
-    """Миксин для ограничения методов."""
-    http_method_names = ['get', 'post', 'delete']
-
-    def retrieve(self, request, *args, **kwargs):
-        return response.Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-class SearchAndFilterMixin:
-    """Миксин для поиска по имени и фильтрации по слагу."""
-    lookup_field = 'slug'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-
-
-class TitleViewSet(AdminOrReadOnlyMixin,
-                   PaginationMixin,
-                   viewsets.ModelViewSet):
+class TitleViewSet(
+    AdminOrReadOnlyMixin, PaginationMixin, viewsets.ModelViewSet
+):
     """Возвращает список тайтлов, позволяет их добавлять и редактировать."""
 
     queryset = Title.objects.all()
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = (
+        "get",
+        "post",
+        "patch",
+        "delete",
+    )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
@@ -64,34 +63,30 @@ class TitleViewSet(AdminOrReadOnlyMixin,
 
     def get_serializer_class(self):
         """Выбор сериализатора в зависимости от действия."""
-        return (TitleDetailSerializer
-                if self.action in ['retrieve']
-                else TitleSerializer)
+        return (
+            TitleDetailSerializer
+            if self.action in ["retrieve"]
+            else TitleSerializer
+        )
 
     def create(self, request, *args, **kwargs):
         """Создает произведение и возвращает детализацию."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        title = serializer.save()
-        return response.Response(TitleDetailSerializer(title).data, status=201)
+        serializer.save()
+        return response.Response(serializer.data, status=HTTPStatus.CREATED)
 
 
-class CategoryViewSet(AdminOrReadOnlyMixin,
-                      SearchAndFilterMixin,
-                      PaginationMixin,
-                      GetPostMixin,
-                      viewsets.ModelViewSet):
+class CategoryViewSet(BaseCatGenreViewSet):
     """Возвращает список категорий и позволяет их добавлять и редактировать."""
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
-class GenreViewSet(AdminOrReadOnlyMixin,
-                   SearchAndFilterMixin,
-                   PaginationMixin,
-                   GetPostMixin,
-                   viewsets.ModelViewSet):
+class GenreViewSet(BaseCatGenreViewSet):
     """Возвращает список жанров и позволяет их добавлять и редактировать."""
+
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
@@ -100,9 +95,15 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
     """
     ViewSet для работы с отзывами.
     """
+
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = (
+        "get",
+        "post",
+        "patch",
+        "delete",
+    )
 
     def get_post_id(self):
         """Возвращает id произведения."""
@@ -113,17 +114,18 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
         title_id = self.get_post_id()
         title = get_object_or_404(Title, pk=title_id)
 
-        if Review.objects.filter(author=self.request.user,
-                                 title=title).exists():
-            error_message = ("""У вас уже была рецензия на это произведение.
+        if Review.objects.filter(
+            author=self.request.user, title=title
+        ).exists():
+            error_message = """У вас уже была рецензия на это произведение.
                              Вы можете удалить ее и написать новую или
-                             внести изменения.""")
+                             внести изменения."""
             raise serializers.ValidationError({"detail": error_message})
 
         serializer.save(author=self.request.user, title=title)
 
     def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
+        title_id = self.kwargs.get("title_id")
         return self.queryset.filter(title_id=title_id)
 
 
@@ -134,7 +136,12 @@ class CommentViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = (
+        "get",
+        "post",
+        "patch",
+        "delete",
+    )
 
     def get_post_id(self):
         """Возвращает id рецензии."""
@@ -147,5 +154,5 @@ class CommentViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
         serializer.save(author=self.request.user, review=review)
 
     def get_queryset(self):
-        review_id = self.kwargs.get('review_id')
+        review_id = self.kwargs.get("review_id")
         return self.queryset.filter(review_id=review_id)

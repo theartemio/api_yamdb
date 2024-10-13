@@ -33,6 +33,12 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
+5. При необходимости загрузите базу данных из .csv файлов с помощью команды:
+
+```bash
+python manage.py import_csv
+```
+
 ## Использование
 
 ### Регистрация пользователя

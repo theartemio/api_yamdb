@@ -11,19 +11,19 @@ router.register("titles", TitleViewSet)
 router.register("categories", CategoryViewSet)
 router.register("genres", GenreViewSet)
 router.register(
-    r'titles/(?P<title_id>\d+)/reviews',
+    r"titles/(?P<title_id>\d+)/reviews",
     ReviewViewSet,
-    basename='reviews',
+    basename="reviews",
 )
 router.register(
-    r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
+    r"titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments",
     CommentViewSet,
-    basename='comments',
+    basename="comments",
 )
 
 urlpatterns = [
     path("v1/", include(router.urls)),
-    path("v1/", include('users.urls')), ]
+    path("v1/", include("users.urls")), ]
 
 if settings.DEBUG:
     urlpatterns += static(
