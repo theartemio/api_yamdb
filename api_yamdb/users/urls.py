@@ -1,8 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (CustomTokenObtainView, RegistrationAPIView, UsersMeAPIView,
-                    UsersViewSet)
+from .views import (
+    CustomTokenObtainView,
+    RegistrationAPIView,
+    UsersMeAPIView,
+    UsersViewSet,
+)
 
 router = DefaultRouter()
 router.register("users", UsersViewSet)

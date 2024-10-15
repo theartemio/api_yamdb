@@ -1,4 +1,3 @@
-
 # Maximum length for names of all kinds
 MAX_USER_NAMES_L = 150
 

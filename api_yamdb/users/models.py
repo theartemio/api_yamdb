@@ -1,14 +1,15 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
-from .constants import (CHOICES,
-                        MAX_EMAIL_L,
-                        MAX_ROLE_L,
-                        MAX_USER_NAMES_L,
-                        ADMIN,
-                        MODERATOR,
-                        USER
-                        )
+from .constants import (
+    CHOICES,
+    MAX_EMAIL_L,
+    MAX_ROLE_L,
+    MAX_USER_NAMES_L,
+    ADMIN,
+    MODERATOR,
+    USER,
+)
 
 
 class UserManager(BaseUserManager):
@@ -70,8 +71,10 @@ class User(AbstractUser):
         choices=CHOICES,
         default=USER,
         verbose_name="Пользовательская роль.",
-        help_text=("Пользователь может быть модератором,",
-                   " админом или обычным юзером."),
+        help_text=(
+            "Пользователь может быть модератором,",
+            " админом или обычным юзером.",
+        ),
     )
     bio = models.TextField(
         blank=True,

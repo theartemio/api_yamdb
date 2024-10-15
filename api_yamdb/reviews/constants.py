@@ -1,4 +1,3 @@
-
 # Maximum name length for titles and names
 MAX_NAME_L = 256
 

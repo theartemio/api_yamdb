@@ -61,7 +61,7 @@ class Title(models.Model):
     year = models.PositiveSmallIntegerField(
         verbose_name="Год",
         help_text="Год выпуска произведения.",
-        validators=(validate_year,)
+        validators=(validate_year,),
     )
     description = models.TextField(
         blank=True,
@@ -107,8 +107,10 @@ class Review(models.Model):
     )
     text = models.TextField(
         verbose_name="Текст рецензии",
-        help_text=("Текст, в котором автор рецензии",
-                   " изложил свои глубокие мысли."),
+        help_text=(
+            "Текст, в котором автор рецензии",
+            " изложил свои глубокие мысли.",
+        ),
     )
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]

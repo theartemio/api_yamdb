@@ -1,22 +1,24 @@
-MTM_MODELS = ['title_genre', ]
-
-APPS = [
-    'users',
-    'reviews',
+MTM_MODELS = [
+    "title_genre",
 ]
 
-PATH = 'static/data'
+APPS = [
+    "users",
+    "reviews",
+]
+
+PATH = "static/data"
 
 APPS_AND_MODELS = {
-    'reviews': [
-        'category',
-        'genre',
-        'title',
-        'title_genre',
-        'review',
-        'comment',
+    "reviews": [
+        "category",
+        "genre",
+        "title",
+        "title_genre",
+        "review",
+        "comment",
     ],
-    'users': [
-        'user',
-    ]
+    "users": [
+        "user",
+    ],
 }
