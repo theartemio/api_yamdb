@@ -110,19 +110,22 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context['request']
-        title_id = self.context["view"].kwargs.get("title_id")
-        title = get_object_or_404(Title, pk=title_id)
+        if request.method == 'POST':
+            title_id = self.context["view"].kwargs.get("title_id")
+            title = get_object_or_404(Title, pk=title_id)
 
-        if request.method == 'POST' and Review.objects.filter(
-            author=self.context["request"].user, title=title
-        ).exists():
-            raise serializers.ValidationError(
-                {
-                    "detail": "У вас уже была рецензия на это произведение. "
-                    "Вы можете ее изменить или удалить и написать новую."
-                }
-            )
-
+            if request.method == 'POST' and Review.objects.filter(
+                author=self.context["request"].user, title=title
+            ).exists():
+                raise serializers.ValidationError(
+                    {
+                        "detail": (
+                            "У вас уже была рецензия на это произведение. "
+                            "Вы можете ее изменить или удалить "
+                            "и написать новую."
+                        )
+                    }
+                )
         return data
 
 
@@ -138,11 +141,6 @@ class CommentSerializer(serializers.ModelSerializer):
         slug_field="username", read_only=True
     )
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation.pop("review", None)
-        return representation
-
     class Meta:
         model = Comment
         fields = (
@@ -156,3 +154,8 @@ class CommentSerializer(serializers.ModelSerializer):
             "author",
             "pub_date",
         )
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation.pop("review", None)
+        return representation

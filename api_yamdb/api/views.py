@@ -116,7 +116,7 @@ class ReviewViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
         serializer.save(author=self.request.user, title=title)
 
     def get_queryset(self):
-        title_id = self.kwargs.get("title_id")
+        title_id = self.get_post_id()
         return self.queryset.filter(title_id=title_id)
 
 
@@ -145,5 +145,5 @@ class CommentViewSet(AuthorPermissionMixin, viewsets.ModelViewSet):
         serializer.save(author=self.request.user, review=review)
 
     def get_queryset(self):
-        review_id = self.kwargs.get("review_id")
+        review_id = self.get_post_id()
         return self.queryset.filter(review_id=review_id)
