@@ -1,15 +1,8 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
-from .constants import (
-    CHOICES,
-    MAX_EMAIL_L,
-    MAX_ROLE_L,
-    MAX_USER_NAMES_L,
-    ADMIN,
-    MODERATOR,
-    USER,
-)
+from .constants import (ADMIN, CHOICES, MAX_EMAIL_L, MAX_ROLE_L,
+                        MAX_USER_NAMES_L, MODERATOR, USER)
 
 
 class UserManager(BaseUserManager):

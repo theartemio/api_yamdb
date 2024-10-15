@@ -1,13 +1,8 @@
 from django.http import Http404
 from rest_framework import serializers
 
-from .constants import (
-    MAX_EMAIL_L,
-    MAX_ROLE_L,
-    MAX_USER_NAMES_L,
-    MAX_CODE_L,
-    MAX_TOKEN_L,
-)
+from .constants import (MAX_CODE_L, MAX_EMAIL_L, MAX_ROLE_L, MAX_TOKEN_L,
+                        MAX_USER_NAMES_L)
 from .mixins import ValidateUsernameMixin
 from .models import User
 

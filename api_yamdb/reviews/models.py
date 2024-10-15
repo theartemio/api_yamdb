@@ -1,12 +1,9 @@
-import datetime as dt
-
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from rest_framework import serializers
 from users.models import User
 
-from .validators import validate_year
 from .constants import MAX_NAME_L, MAX_SLUG_L
+from .validators import validate_year
 
 
 class NameSlugMixin(models.Model):

@@ -10,12 +10,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .permissions import IsAdminOrRestricted
-from .serializers import (
-    CustomTokenObtainSerializer,
-    RegistrationSerializer,
-    UsersMeSerializer,
-    UsersSerializer,
-)
+from .serializers import (CustomTokenObtainSerializer, RegistrationSerializer,
+                          UsersMeSerializer, UsersSerializer)
 
 
 class CustomTokenObtainView(APIView):
