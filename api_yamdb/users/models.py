@@ -1,12 +1,19 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
-from .constants import CHOICES, MAX_EMAIL_L, MAX_ROLE_L, MAX_USER_NAMES_L
+from .constants import (CHOICES,
+                        MAX_EMAIL_L,
+                        MAX_ROLE_L,
+                        MAX_USER_NAMES_L,
+                        ADMIN,
+                        MODERATOR,
+                        USER
+                        )
 
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, username, email, role="user", bio="", password=None):
+    def create_user(self, username, email, role=USER, bio="", password=None):
         if username is None:
             raise TypeError("Укажите юзернейм.")
         if email is None:
@@ -21,7 +28,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, username, email, role="admin", bio="", password=None
+        self, username, email, role=ADMIN, bio="", password=None
     ):
         user = self.create_user(username, email)
         user.is_superuser = True
@@ -61,7 +68,7 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=MAX_ROLE_L,
         choices=CHOICES,
-        default="user",
+        default=USER,
         verbose_name="Пользовательская роль.",
         help_text=("Пользователь может быть модератором,",
                    " админом или обычным юзером."),
@@ -75,11 +82,11 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == "admin"
+        return self.role == ADMIN
 
     @property
     def is_moderator(self):
-        return self.role == "moderator"
+        return self.role == MODERATOR
 
     def __str__(self):
         return self.email

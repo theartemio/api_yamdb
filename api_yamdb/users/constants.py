@@ -14,11 +14,20 @@ MAX_CODE_L = 4
 # Maximum token length
 MAX_TOKEN_L = 255
 
+# Admin role
+ADMIN = "admin"
+
+# Moderator role
+MODERATOR = "moderator"
+
+# User role
+USER = "user"
+
 # User roles
 CHOICES = (
-    ("user", "user"),
-    ("moderator", "moderator"),
-    ("admin", "admin"),
+    (USER, USER),
+    (MODERATOR, MODERATOR),
+    (ADMIN, ADMIN),
 )
 
 PATTERN = r"^[\w.@+-]+\Z"
