@@ -5,6 +5,7 @@ from django.db import models
 from rest_framework import serializers
 from users.models import User
 
+from .validators import validate_year
 from .constants import MAX_NAME_L, MAX_SLUG_L
 
 
@@ -58,7 +59,9 @@ class Title(models.Model):
         help_text="Официальное название произведения.",
     )
     year = models.PositiveSmallIntegerField(
-        verbose_name="Год", help_text="Год выпуска произведения."
+        verbose_name="Год",
+        help_text="Год выпуска произведения.",
+        validators=(validate_year,)
     )
     description = models.TextField(
         blank=True,
@@ -84,11 +87,6 @@ class Title(models.Model):
         verbose_name="Категория",
         help_text="Категория, например 'фильм' или 'музыка'.",
     )
-
-    def clean(self):
-        current_year = dt.date.today().year
-        if self.year > current_year:
-            raise serializers.ValidationError("Произведение еще не вышло!")
 
     def __str__(self):
         return f"{self.name} {self.genre} {self.category}"

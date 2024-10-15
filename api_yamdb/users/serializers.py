@@ -1,7 +1,13 @@
 from django.http import Http404
 from rest_framework import serializers
 
-from .constants import MAX_EMAIL_L, MAX_ROLE_L, MAX_USER_NAMES_L
+from .constants import (
+    MAX_EMAIL_L,
+    MAX_ROLE_L,
+    MAX_USER_NAMES_L,
+    MAX_CODE_L,
+    MAX_TOKEN_L,
+)
 from .mixins import ValidateUsernameMixin
 from .models import User
 
@@ -90,13 +96,13 @@ class UsersSerializer(ValidateUsernameMixin, serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.CharField(max_length=255)
+    email = serializers.CharField(max_length=MAX_EMAIL_L)
     username = serializers.CharField(
-        max_length=255,
+        max_length=MAX_USER_NAMES_L,
     )
     confirmate_code = serializers.CharField(
-        max_length=128,
+        max_length=MAX_CODE_L,
     )
     token = serializers.CharField(
-        max_length=255,
+        max_length=MAX_TOKEN_L,
     )

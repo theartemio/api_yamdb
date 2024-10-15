@@ -10,8 +10,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .permissions import IsAdminOrRestricted
-from .serializers import (CustomTokenObtainSerializer, RegistrationSerializer,
-                          UsersMeSerializer, UsersSerializer)
+from .serializers import (
+    CustomTokenObtainSerializer,
+    RegistrationSerializer,
+    UsersMeSerializer,
+    UsersSerializer,
+)
 
 
 class CustomTokenObtainView(APIView):
@@ -72,8 +76,10 @@ class RegistrationAPIView(APIView):
                     username=username, defaults={"email": email}
                 )
             except IntegrityError:
-                return Response({"error": "Эмейл занят!"},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Эмейл занят!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             if not created and user.email != email:
                 return Response(
@@ -125,7 +131,12 @@ class UsersViewSet(AdminPermissionMixin, viewsets.ModelViewSet):
     добавлять новых, удалять старых и менять информацию.
     """
 
-    http_method_names = ["get", "post", "patch", "delete"]
+    http_method_names = (
+        "get",
+        "post",
+        "patch",
+        "delete",
+    )
     queryset = User.objects.all()
     serializer_class = UsersSerializer
     filter_backends = (filters.SearchFilter,)

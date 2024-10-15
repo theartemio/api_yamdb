@@ -1,5 +1,3 @@
-import datetime as dt
-
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
@@ -76,16 +74,6 @@ class TitleDetailSerializer(serializers.ModelSerializer):
             "genre",
             "category",
         )
-
-    def validate_year(self, value):
-        """
-        Проверяет что год выпуска произведения уже наступил
-        (что произведение уже вышло)
-        """
-        current_year = dt.date.today().year
-        if value > current_year:
-            raise serializers.ValidationError("Произведение еще не вышло!")
-        return value
 
 
 class ReviewSerializer(serializers.ModelSerializer):

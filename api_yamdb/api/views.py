@@ -8,10 +8,19 @@ from rest_framework import response, viewsets
 from reviews.models import Category, Comment, Genre, Review, Title
 
 from .filtersets import TitleFilter
-from .mixins import (AdminOrReadOnlyMixin, AuthorPermissionMixin, GetPostMixin,
-                     PaginationMixin, SearchAndFilterMixin)
-from .serializers import (CategorySerializer, GenreSerializer,
-                          TitleDetailSerializer, TitleSerializer)
+from .mixins import (
+    AdminOrReadOnlyMixin,
+    AuthorPermissionMixin,
+    GetPostMixin,
+    PaginationMixin,
+    SearchAndFilterMixin,
+)
+from .serializers import (
+    CategorySerializer,
+    GenreSerializer,
+    TitleDetailSerializer,
+    TitleSerializer,
+)
 
 
 class BaseCatGenreViewSet(
@@ -23,8 +32,7 @@ class BaseCatGenreViewSet(
 ):
     """Абстрактный базовый вьюсет для вьюсетов простых моделей."""
 
-    class Meta:
-        abstract = True
+    pass
 
 
 class TitleViewSet(
